@@ -5,7 +5,7 @@ namespace AlipayMiniProgramBundle\Repository;
 use AlipayMiniProgramBundle\Entity\MiniProgram;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use DoctrineEnhanceBundle\Repository\CommonRepositoryAware;
+
 
 /**
  * @extends ServiceEntityRepository<MiniProgram>
@@ -17,7 +17,6 @@ use DoctrineEnhanceBundle\Repository\CommonRepositoryAware;
  */
 class MiniProgramRepository extends ServiceEntityRepository
 {
-    use CommonRepositoryAware;
 
     public function __construct(ManagerRegistry $registry)
     {

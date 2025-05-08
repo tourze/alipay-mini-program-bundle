@@ -5,7 +5,7 @@ namespace AlipayMiniProgramBundle\Repository;
 use AlipayMiniProgramBundle\Entity\AuthCode;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use DoctrineEnhanceBundle\Repository\CommonRepositoryAware;
+
 
 /**
  * @extends ServiceEntityRepository<AuthCode>
@@ -17,7 +17,6 @@ use DoctrineEnhanceBundle\Repository\CommonRepositoryAware;
  */
 class AuthCodeRepository extends ServiceEntityRepository
 {
-    use CommonRepositoryAware;
 
     public function __construct(ManagerRegistry $registry)
     {
