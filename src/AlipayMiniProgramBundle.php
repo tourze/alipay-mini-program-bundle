@@ -12,7 +12,6 @@ class AlipayMiniProgramBundle extends Bundle implements BundleDependencyInterfac
     public static function getBundleDependencies(): array
     {
         return [
-            \AntdCpBundle\AntdCpBundle::class => ['all' => true],
             \Tourze\DoctrineIndexedBundle\DoctrineIndexedBundle::class => ['all' => true],
         ];
     }
