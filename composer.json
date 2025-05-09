@@ -5,6 +5,7 @@
   "license": "MIT",
   "require": {
     "php": "^8.1",
+    "ext-openssl": "*",
     "alipaysdk/openapi": "^2.5",
     "doctrine/collections": "^2.3",
     "doctrine/dbal": "^4.0",
@@ -17,6 +18,7 @@
     "symfony/config": "^6.4",
     "symfony/console": "^6.4",
     "symfony/dependency-injection": "^6.4",
+    "symfony/http-client": "^6.4",
     "symfony/http-foundation": "^6.4",
     "symfony/http-kernel": "^6.4",
     "symfony/security-bundle": "^6.4",
