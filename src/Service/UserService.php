@@ -9,8 +9,8 @@ use AlipayMiniProgramBundle\Enum\AlipayUserGender;
 use AlipayMiniProgramBundle\Repository\PhoneRepository;
 use AlipayMiniProgramBundle\Repository\UserRepository;
 use AppBundle\Entity\BizUser;
-use AppBundle\Repository\BizUserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bridge\Doctrine\Security\User\UserLoaderInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Tourze\JsonRPC\Core\Exception\ApiException;
 
@@ -19,7 +19,7 @@ class UserService
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly PhoneRepository $phoneRepository,
-        private readonly BizUserRepository $bizUserRepository,
+        private readonly UserLoaderInterface $userLoader,
         private readonly UserRepository $alipayUserRepository,
     ) {
     }
@@ -106,7 +106,7 @@ class UserService
     /**
      * 获取或创建业务用户
      */
-    public function getBizUser(User $user): BizUser
+    public function getBizUser(User $user): UserInterface
     {
         // 先通过手机号查找业务用户 todo 与已有帐号合并问题
         $phone = $this->getLatestPhone($user);
@@ -122,9 +122,7 @@ class UserService
         //            }
         //        }
 
-        $bizUser = $this->bizUserRepository->findOneBy([
-            'username' => $user->getOpenId(),
-        ]);
+        $bizUser = $this->userLoader->loadUserByIdentifier($user->getOpenId());
         if ($bizUser) {
             return $bizUser;
         }
