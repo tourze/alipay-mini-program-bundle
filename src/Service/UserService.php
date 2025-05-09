@@ -8,7 +8,7 @@ use AlipayMiniProgramBundle\Entity\User;
 use AlipayMiniProgramBundle\Enum\AlipayUserGender;
 use AlipayMiniProgramBundle\Repository\PhoneRepository;
 use AlipayMiniProgramBundle\Repository\UserRepository;
-use AppBundle\Entity\BizUser;
+use BizUserBundle\Entity\BizUser;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Security\User\UserLoaderInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
