@@ -16,16 +16,6 @@
 composer require symfony-aio/alipay-mini-program-bundle
 ```
 
-## 配置
-
-在 `.env` 文件中配置以下参数：
-
-```dotenv
-ALIPAY_MINI_APPID=你的小程序APPID
-ALIPAY_MINI_PRIVATE_KEY=应用私钥
-ALIPAY_MINI_PUBLIC_KEY=支付宝公钥
-```
-
 ## 使用示例
 
 ### 获取用户信息
