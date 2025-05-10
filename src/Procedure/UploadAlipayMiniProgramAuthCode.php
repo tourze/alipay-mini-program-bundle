@@ -15,7 +15,6 @@ use AlipayMiniProgramBundle\Service\UserService;
 use Carbon\Carbon;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
-use GuzzleHttp\Exception\ConnectException;
 use Symfony\Component\HttpClient\Exception\TimeoutException;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -150,7 +149,7 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
 
             // 生成 JWT
             $token = $this->accessTokenService->createToken($bizUser);
-        } catch (ConnectException|TimeoutException $exception) {
+        } catch (TimeoutException $exception) {
             throw new ApiException('支付宝接口超时，请稍后重试', 0, previous: $exception);
         } catch (UniqueConstraintViolationException $exception) {
             $this->getLockLogger()->error('授权失败:' . $exception->getMessage());

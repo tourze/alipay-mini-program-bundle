@@ -5,8 +5,8 @@ namespace AlipayMiniProgramBundle\Entity;
 use AlipayMiniProgramBundle\Repository\MiniProgramRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use DoctrineEnhanceBundle\Traits\UniqueCodeAware;
 use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
+use Tourze\DoctrineRandomBundle\Attribute\RandomStringColumn;
 use Tourze\DoctrineTimestampBundle\Attribute\CreateTimeColumn;
 use Tourze\DoctrineTimestampBundle\Attribute\UpdateTimeColumn;
 use Tourze\EasyAdmin\Attribute\Action\Creatable;
@@ -17,6 +17,7 @@ use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
 use Tourze\EasyAdmin\Attribute\Column\ListColumn;
 use Tourze\EasyAdmin\Attribute\Field\FormField;
 use Tourze\EasyAdmin\Attribute\Filter\Filterable;
+use Tourze\EasyAdmin\Attribute\Filter\Keyword;
 
 #[Deletable]
 #[Editable]
@@ -26,14 +27,31 @@ use Tourze\EasyAdmin\Attribute\Filter\Filterable;
 #[ORM\HasLifecycleCallbacks]
 class MiniProgram
 {
-    use UniqueCodeAware;
-
     #[ListColumn(order: -1)]
     #[ExportColumn]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
     private ?int $id = 0;
+
+    #[RandomStringColumn(length: 10)]
+    #[FormField(title: '编码', order: -1)]
+    #[Keyword]
+    #[ListColumn(order: -1)]
+    #[ORM\Column(type: Types::STRING, length: 100, unique: true, nullable: true, options: ['comment' => '编码'])]
+    private ?string $code = null;
+
+    public function getCode(): ?string
+    {
+        return $this->code;
+    }
+
+    public function setCode(string $code): self
+    {
+        $this->code = $code;
+
+        return $this;
+    }
 
     /**
      * 小程序名称

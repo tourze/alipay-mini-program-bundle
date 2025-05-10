@@ -2,10 +2,6 @@
 
 namespace AlipayMiniProgramBundle\Request;
 
-require_once __DIR__ . '/../../../../vendor/alipaysdk/openapi/v2/aop/AlipayConfig.php';
-require_once __DIR__ . '/../../../../vendor/alipaysdk/openapi/v2/aop/AopClient.php';
-require_once __DIR__ . '/../../../../vendor/alipaysdk/openapi/v2/aop/request/AlipaySystemOauthTokenRequest.php';
-
 use AlipayMiniProgramBundle\Response\AlipaySystemOauthTokenResponse;
 use Psr\Log\LoggerInterface;
 

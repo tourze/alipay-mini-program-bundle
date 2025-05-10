@@ -2,8 +2,6 @@
 
 namespace AlipayMiniProgramBundle\Request;
 
-require_once __DIR__ . '/../../../../vendor/alipaysdk/openapi/v2/aop/AlipayConfig.php';
-
 use AlipayMiniProgramBundle\Response\AlipayUserInfoShareResponse;
 
 class AlipayUserInfoShareRequest
