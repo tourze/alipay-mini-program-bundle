@@ -2,6 +2,7 @@
 
 namespace AlipayMiniProgramBundle\Procedure;
 
+use AccessTokenBundle\Service\AccessTokenService;
 use AlipayMiniProgramBundle\Entity\AuthCode;
 use AlipayMiniProgramBundle\Entity\User;
 use AlipayMiniProgramBundle\Enum\AlipayAuthScope;
@@ -15,7 +16,6 @@ use Carbon\Carbon;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use GuzzleHttp\Exception\ConnectException;
-use JWTAuthenticationBundle\TokenManager\JWTTokenManagerInterface;
 use Symfony\Component\HttpClient\Exception\TimeoutException;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -65,7 +65,7 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
         private readonly SdkService $sdkService,
         private readonly RequestStack $requestStack,
         private readonly UserService $userService,
-        private readonly JWTTokenManagerInterface $jwtManager,
+        private readonly AccessTokenService $accessTokenService,
     ) {
     }
 
@@ -149,7 +149,7 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
             $bizUser = $this->userService->getBizUser($user);
 
             // 生成 JWT
-            $token = $this->jwtManager->create($bizUser);
+            $token = $this->accessTokenService->createToken($bizUser);
         } catch (ConnectException|TimeoutException $exception) {
             throw new ApiException('支付宝接口超时，请稍后重试', 0, previous: $exception);
         } catch (UniqueConstraintViolationException $exception) {
