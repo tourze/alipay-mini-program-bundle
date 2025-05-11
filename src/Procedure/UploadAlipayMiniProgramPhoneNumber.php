@@ -102,7 +102,7 @@ class UploadAlipayMiniProgramPhoneNumber extends LockableProcedure
         ];
     }
 
-    protected function getLockResource(JsonRpcParams $params): array
+    public function getLockResource(JsonRpcParams $params): ?array
     {
         return [
             'UploadAlipayMiniProgramPhoneNumber' . $params->get('userId'),

@@ -181,7 +181,7 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
         return $result;
     }
 
-    protected function getLockResource(JsonRpcParams $params): array
+    public function getLockResource(JsonRpcParams $params): ?array
     {
         return [
             'UploadAlipayMiniProgramAuthCode' . $params->get('authCode'),
