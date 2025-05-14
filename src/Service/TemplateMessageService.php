@@ -2,6 +2,9 @@
 
 namespace AlipayMiniProgramBundle\Service;
 
+use Alipay\OpenAPISDK\Api\AlipayOpenAppMiniTemplatemessageApi;
+use Alipay\OpenAPISDK\Model\AlipayOpenAppMiniTemplatemessageSendModel;
+use Alipay\OpenAPISDK\Util\Model\AlipayConfig;
 use AlipayMiniProgramBundle\Entity\TemplateMessage;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -9,7 +12,6 @@ class TemplateMessageService
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly SdkService $sdkService,
     ) {
     }
 
@@ -23,32 +25,42 @@ class TemplateMessageService
         }
 
         try {
-            $config = $this->sdkService->getSdkFromMiniProgram($message->getMiniProgram());
+            $apiInstance = new AlipayOpenAppMiniTemplatemessageApi(
+                // If you want use custom http client, pass your client which implements `GuzzleHttp\ClientInterface`.
+                // This is optional, `GuzzleHttp\Client` will be used as default.
+                new \GuzzleHttp\Client()
+            );
 
-            // 构造请求参数
-            $bizContent = [
-                'to_open_id' => $message->getToOpenId(),
-                'user_template_id' => $message->getTemplateId(),
-                'page' => $message->getPage(),
-                'data' => $message->getData(),
-            ];
+            // 初始化alipay参数
+            $alipayConfig = new AlipayConfig();
+            $alipayConfig->setAppId($message->getMiniProgram()->getAppId());
+            $alipayConfig->setPrivateKey($message->getMiniProgram()->getPrivateKey());
+            // 密钥模式
+            $alipayConfig->setAlipayPublicKey($message->getMiniProgram()->getAlipayPublicKey());
+            // 证书模式
+            // $alipayConfig->setAppCertPath('../appCertPublicKey.crt');
+            // $alipayConfig->setAlipayPublicCertPath('../alipayCertPublicKey_RSA2.crt');
+            // $alipayConfig->setRootCertPath('../alipayRootCert.crt');
+            $alipayConfig->setEncryptKey($message->getMiniProgram()->getEncryptKey());
+            $alipayConfigUtil = new \Alipay\OpenAPISDK\Util\AlipayConfigUtil($alipayConfig);
+            $apiInstance->setAlipayConfigUtil($alipayConfigUtil);
 
-            // 发送请求
-            $client = new \AopClient($config);
-            $request = new \AlipayOpenAppMiniTemplatemessageSendRequest();
-            $request->setBizContent(json_encode($bizContent, JSON_UNESCAPED_UNICODE));
+            $sendModel = new AlipayOpenAppMiniTemplatemessageSendModel();
+            $sendModel->setToOpenId($message->getToOpenId());
+            $sendModel->setUserTemplateId($message->getToOpenId());
+            $sendModel->setPage($message->getPage());
+            $sendModel->setData(json_encode($message->getData()));
 
-            $result = $client->execute($request);
-            $response = $result->alipay_open_app_mini_templatemessage_send_response;
+            $response = $apiInstance->send($sendModel);
 
             $message->setIsSent(true);
             $message->setSentTime(new \DateTimeImmutable());
-            $message->setSendResult('10000' === $response->code ? 'success' : ($response->sub_msg ?? $response->msg ?? 'unknown error'));
+            $message->setSendResult('10000' === $response->getCode() ? 'success' : ($response->getMessage() ?? 'unknown error'));
 
             $this->entityManager->persist($message);
             $this->entityManager->flush();
 
-            return '10000' === $response->code;
+            return true;
         } catch (\Throwable $e) {
             $message->setSendResult($e->getMessage());
             $this->entityManager->persist($message);

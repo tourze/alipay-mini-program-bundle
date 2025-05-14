@@ -8,6 +8,8 @@ services:
     resource: '../../Command/'
   AlipayMiniProgramBundle\EventSubscriber\:
     resource: '../../EventSubscriber/'
+  AlipayMiniProgramBundle\MessageHandler\:
+    resource: '../../MessageHandler/'
   AlipayMiniProgramBundle\Procedure\:
     resource: '../../Procedure/'
   AlipayMiniProgramBundle\Repository\:

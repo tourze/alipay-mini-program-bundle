@@ -3,20 +3,23 @@
 namespace AlipayMiniProgramBundle\Procedure;
 
 use AccessTokenBundle\Service\AccessTokenService;
+use Alipay\OpenAPISDK\Api\AlipaySystemOauthApi;
+use Alipay\OpenAPISDK\Model\AlipaySystemOauthTokenModel;
+use Alipay\OpenAPISDK\Util\AlipayConfigUtil;
+use Alipay\OpenAPISDK\Util\Model\AlipayConfig;
 use AlipayMiniProgramBundle\Entity\AuthCode;
 use AlipayMiniProgramBundle\Entity\User;
 use AlipayMiniProgramBundle\Enum\AlipayAuthScope;
+use AlipayMiniProgramBundle\Message\UpdateUserInfoMessage;
 use AlipayMiniProgramBundle\Repository\MiniProgramRepository;
 use AlipayMiniProgramBundle\Repository\UserRepository;
-use AlipayMiniProgramBundle\Request\AlipaySystemOauthTokenRequest;
-use AlipayMiniProgramBundle\Request\AlipayUserInfoShareRequest;
-use AlipayMiniProgramBundle\Service\SdkService;
 use AlipayMiniProgramBundle\Service\UserService;
 use Carbon\Carbon;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpClient\Exception\TimeoutException;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
 use Tourze\JsonRPC\Core\Attribute\MethodExpose;
@@ -61,7 +64,7 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
         private readonly EntityManagerInterface $entityManager,
         private readonly MiniProgramRepository $miniProgramRepository,
         private readonly UserRepository $userRepository,
-        private readonly SdkService $sdkService,
+        private readonly MessageBusInterface $messageBus,
         private readonly RequestStack $requestStack,
         private readonly UserService $userService,
         private readonly AccessTokenService $accessTokenService,
@@ -81,18 +84,36 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
             throw new ApiException('未找到小程序配置');
         }
 
-        // 获取 SDK 实例
-        $config = $this->sdkService->getSdkFromMiniProgram($miniProgram);
-
         try {
             // 使用授权码换取访问令牌
-            $tokenRequest = new AlipaySystemOauthTokenRequest($config, $this->getLockLogger());
-            $tokenRequest->setGrantType('authorization_code');
-            $tokenRequest->setCode($this->authCode);
+            $apiInstance = new AlipaySystemOauthApi(
+                // If you want use custom http client, pass your client which implements `GuzzleHttp\ClientInterface`.
+                // This is optional, `GuzzleHttp\Client` will be used as default.
+                new \GuzzleHttp\Client()
+            );
 
-            $response = $tokenRequest->getToken();
-            if (!$response->isSuccess()) {
-                throw new ApiException(sprintf('获取访问令牌失败：%s', $response->getMsg()));
+            // 初始化alipay参数
+            $alipayConfig = new AlipayConfig();
+            $alipayConfig->setAppId($miniProgram->getAppId());
+            $alipayConfig->setPrivateKey($miniProgram->getPrivateKey());
+            // 密钥模式
+            $alipayConfig->setAlipayPublicKey($miniProgram->getAlipayPublicKey());
+            // 证书模式
+            // $alipayConfig->setAppCertPath('../appCertPublicKey.crt');
+            // $alipayConfig->setAlipayPublicCertPath('../alipayCertPublicKey_RSA2.crt');
+            // $alipayConfig->setRootCertPath('../alipayRootCert.crt');
+            $alipayConfig->setEncryptKey($miniProgram->getEncryptKey());
+            $alipayConfigUtil = new AlipayConfigUtil($alipayConfig);
+            $apiInstance->setAlipayConfigUtil($alipayConfigUtil);
+
+            $tokenModel = new AlipaySystemOauthTokenModel();
+            $tokenModel->setGrantType('authorization_code');
+            $tokenModel->setCode($this->authCode);
+
+            try {
+                $response = $apiInstance->token($tokenModel);
+            } catch (\Throwable $exception) {
+                throw new ApiException(sprintf('获取访问令牌失败：%s', $exception->getMessage()), previous: $exception);
             }
 
             // 查找或创建用户 todo 暂时使用userid,申请通过后替换成openid
@@ -108,22 +129,13 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
                 $user->setMiniProgram($miniProgram);
                 $user->setOpenId($response->getUserId());
             }
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
 
             // 如果是用户信息授权，获取用户信息
             if ($this->scope === AlipayAuthScope::AUTH_USER->value) {
-                $userInfoRequest = new AlipayUserInfoShareRequest($config);
-                $userInfoResponse = $userInfoRequest->getInfo($response->getAccessToken());
-                if (!$userInfoResponse->isSuccess()) {
-                    throw new ApiException(sprintf('获取用户信息失败：%s', $userInfoResponse->getMsg()));
-                }
-
-                // 更新用户信息
-                $user->setNickName($userInfoResponse->getNickName());
-                $user->setAvatar($userInfoResponse->getAvatar());
-                $user->setProvince($userInfoResponse->getProvince());
-                $user->setCity($userInfoResponse->getCity());
-                $user->setGender($userInfoResponse->getGender());
-                $user->setLastInfoUpdateTime(Carbon::now());
+                $message = new UpdateUserInfoMessage($user->getId(), $this->authCode);
+                $this->messageBus->dispatch($message);
             }
 
             // 创建授权记录
