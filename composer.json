@@ -6,7 +6,7 @@
   "require": {
     "php": "^8.1",
     "ext-openssl": "*",
-    "alipaysdk/openapi": "^2.5",
+    "alipaysdk/openapi": "^3.0",
     "doctrine/collections": "^2.3",
     "doctrine/dbal": "^4.0",
     "doctrine/doctrine-bundle": "^2.13",
