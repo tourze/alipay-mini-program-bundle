@@ -6,6 +6,8 @@ services:
 
   AlipayMiniProgramBundle\Command\:
     resource: '../../Command/'
+  AlipayMiniProgramBundle\Controller\:
+    resource: '../../Controller/'
   AlipayMiniProgramBundle\EventSubscriber\:
     resource: '../../EventSubscriber/'
   AlipayMiniProgramBundle\MessageHandler\:
