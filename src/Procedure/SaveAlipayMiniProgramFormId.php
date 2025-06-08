@@ -52,7 +52,7 @@ class SaveAlipayMiniProgramFormId extends LockableProcedure
 
         return [
             'id' => $formId->getId(),
-            'expiredTime' => $formId->getExpireTime()->format('Y-m-d H:i:s'),
+            'expiredTime' => $formId->getExpireTime()?->format('Y-m-d H:i:s'),
         ];
     }
 }
