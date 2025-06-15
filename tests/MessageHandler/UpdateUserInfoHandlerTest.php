@@ -93,7 +93,13 @@ class UpdateUserInfoHandlerTest extends TestCase
             ->method('error')
             ->with('Exception when calling AlipayUserInfoApi->share');
 
-        $this->handler->__invoke($message);
+        // 捕获输出以防止测试产生噪音
+        ob_start();
+        try {
+            $this->handler->__invoke($message);
+        } finally {
+            ob_end_clean();
+        }
     }
 
     public function test_constructor_requires_dependencies(): void
@@ -192,7 +198,13 @@ class UpdateUserInfoHandlerTest extends TestCase
             ->method('error')
             ->with('Exception when calling AlipayUserInfoApi->share');
 
-        $this->handler->__invoke($message);
+        // 捕获输出以防止测试产生噪音
+        ob_start();
+        try {
+            $this->handler->__invoke($message);
+        } finally {
+            ob_end_clean();
+        }
     }
 
     public function test_handler_dependency_injection(): void
