@@ -18,9 +18,9 @@ class UserTest extends TestCase
         // Arrange
         $user = new User();
         $miniProgram = new MiniProgram();
-        $lastInfoUpdateTime = new \DateTime();
-        $createTime = new \DateTime();
-        $updateTime = new \DateTime();
+        $lastInfoUpdateTime = new \DateTimeImmutable();
+        $createTime = new \DateTimeImmutable();
+        $updateTime = new \DateTimeImmutable();
 
         // Act & Assert
         $this->assertEquals(0, $user->getId());
@@ -270,6 +270,6 @@ class UserTest extends TestCase
         $this->assertSame($user, $user->setProvince('test'));
         $this->assertSame($user, $user->setCity('test'));
         $this->assertSame($user, $user->setGender(AlipayUserGender::MALE));
-        $this->assertSame($user, $user->setLastInfoUpdateTime(new \DateTime()));
+        $this->assertSame($user, $user->setLastInfoUpdateTime(new \DateTimeImmutable()));
     }
 }

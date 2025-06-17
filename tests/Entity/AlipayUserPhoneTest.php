@@ -15,9 +15,9 @@ class AlipayUserPhoneTest extends TestCase
         $userPhone = new AlipayUserPhone();
         $user = $this->createMock(User::class);
         $phone = $this->createMock(Phone::class);
-        $verifiedTime = new \DateTime();
-        $createTime = new \DateTime();
-        $updateTime = new \DateTime();
+        $verifiedTime = new \DateTimeImmutable();
+        $createTime = new \DateTimeImmutable();
+        $updateTime = new \DateTimeImmutable();
 
         // Act & Assert
         $this->assertEquals(0, $userPhone->getId());

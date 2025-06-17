@@ -11,7 +11,7 @@ class FormIdTest extends TestCase
     {
         // Arrange
         $formId = new FormId();
-        $now = new \DateTime();
+        $now = new \DateTimeImmutable();
 
         // Act & Assert
         $this->assertEquals(0, $formId->getId());

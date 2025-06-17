@@ -14,9 +14,9 @@ class AuthCodeTest extends TestCase
         // Arrange
         $authCode = new AuthCode();
         $user = new User();
-        $authStart = new \DateTime();
-        $createTime = new \DateTime();
-        $updateTime = new \DateTime();
+        $authStart = new \DateTimeImmutable();
+        $createTime = new \DateTimeImmutable();
+        $updateTime = new \DateTimeImmutable();
 
         // Act & Assert
         $this->assertEquals(0, $authCode->getId());
@@ -140,7 +140,7 @@ class AuthCodeTest extends TestCase
         $this->assertSame($authCode, $authCode->setRefreshToken('test'));
         $this->assertSame($authCode, $authCode->setExpiresIn(3600));
         $this->assertSame($authCode, $authCode->setReExpiresIn(86400));
-        $this->assertSame($authCode, $authCode->setAuthStart(new \DateTime()));
+        $this->assertSame($authCode, $authCode->setAuthStart(new \DateTimeImmutable()));
         $this->assertSame($authCode, $authCode->setSign('test'));
         $this->assertSame($authCode, $authCode->setCreatedFromIp('127.0.0.1'));
         $this->assertSame($authCode, $authCode->setUpdatedFromIp('127.0.0.1'));

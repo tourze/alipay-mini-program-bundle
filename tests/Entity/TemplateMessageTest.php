@@ -17,8 +17,8 @@ class TemplateMessageTest extends TestCase
         $user = new User();
         $data = ['keyword1' => ['value' => 'test']];
         $sentTime = new \DateTimeImmutable();
-        $createTime = new \DateTime();
-        $updateTime = new \DateTime();
+        $createTime = new \DateTimeImmutable();
+        $updateTime = new \DateTimeImmutable();
 
         // Act & Assert
         $this->assertEquals(0, $message->getId());

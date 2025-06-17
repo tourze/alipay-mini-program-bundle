@@ -13,8 +13,8 @@ class PhoneTest extends TestCase
     {
         // Arrange
         $phone = new Phone();
-        $createTime = new \DateTime();
-        $updateTime = new \DateTime();
+        $createTime = new \DateTimeImmutable();
+        $updateTime = new \DateTimeImmutable();
 
         // Act & Assert
         $this->assertEquals(0, $phone->getId());
