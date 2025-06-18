@@ -3,6 +3,7 @@
 namespace AlipayMiniProgramBundle\Entity;
 
 use AlipayMiniProgramBundle\Repository\AlipayUserPhoneRepository;
+use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
@@ -10,9 +11,9 @@ use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
 use Tourze\EasyAdmin\Attribute\Column\ListColumn;
 
 #[ORM\Entity(repositoryClass: AlipayUserPhoneRepository::class)]
-#[ORM\Table(name: 'alipay_mini_program_user_phone')]
-#[ORM\HasLifecycleCallbacks]
-class AlipayUserPhone
+#[ORM\Table(name: 'alipay_mini_program_user_phone', options: ['comment' => '支付宝用户手机号关联表'])]
+#[AsEntityListener]
+class AlipayUserPhone implements \Stringable
 {
     #[ListColumn(order: -1)]
     #[ExportColumn]
@@ -29,8 +30,8 @@ class AlipayUserPhone
     #[ORM\JoinColumn(nullable: false, options: ['comment' => '关联的手机号码'])]
     private ?Phone $phone = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, options: ['comment' => '手机号码验证时间'])]
-    private ?\DateTimeInterface $verifiedTime = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, options: ['comment' => '手机号码验证时间'])]
+    private ?\DateTimeImmutable $verifiedTime = null;
 
     use TimestampableAware;
 
@@ -63,15 +64,23 @@ class AlipayUserPhone
         return $this;
     }
 
-    public function getVerifiedTime(): ?\DateTimeInterface
+    public function getVerifiedTime(): ?\DateTimeImmutable
     {
         return $this->verifiedTime;
     }
 
     public function setVerifiedTime(\DateTimeInterface $verifiedTime): static
     {
-        $this->verifiedTime = $verifiedTime;
+        $this->verifiedTime = $verifiedTime instanceof \DateTimeImmutable ? $verifiedTime : \DateTimeImmutable::createFromInterface($verifiedTime);
 
         return $this;
+    }
+
+    public function __toString(): string
+    {
+        return sprintf('用户%s绑定手机%s',
+            $this->user?->getNickName() ?? $this->user?->getOpenId() ?? 'unknown',
+            $this->phone?->getNumber() ?? 'unknown'
+        );
     }
 }

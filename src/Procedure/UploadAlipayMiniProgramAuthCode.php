@@ -80,7 +80,7 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
 
         // 获取小程序配置
         $miniProgram = $this->miniProgramRepository->findOneBy(['appId' => $this->appId]);
-        if (!$miniProgram) {
+        if ($miniProgram === null) {
             throw new ApiException('未找到小程序配置');
         }
 
@@ -124,7 +124,7 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
             //                $user->setOpenId($response->getOpenId());
             //            }
             $user = $this->userRepository->findOneBy(['openId' => $response->getUserId()]);
-            if (!$user) {
+            if ($user === null) {
                 $user = new User();
                 $user->setMiniProgram($miniProgram);
                 $user->setOpenId($response->getUserId());
@@ -147,9 +147,9 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
             $authCodeEntity->setUserId($response->getUserId());
             $authCodeEntity->setAccessToken($response->getAccessToken());
             $authCodeEntity->setRefreshToken($response->getRefreshToken());
-            $authCodeEntity->setExpiresIn($response->getExpiresIn());
-            $authCodeEntity->setReExpiresIn($response->getReExpiresIn());
-            $authCodeEntity->setAuthStart(Carbon::createFromTimestamp($response->getAuthStart(), date_default_timezone_get()));
+            $authCodeEntity->setExpiresIn((int) $response->getExpiresIn());
+            $authCodeEntity->setReExpiresIn((int) $response->getReExpiresIn());
+            $authCodeEntity->setAuthStart(Carbon::createFromTimestamp($response->getAuthStart(), date_default_timezone_get())->toDateTimeImmutable());
             $authCodeEntity->setCreatedFromIp($this->requestStack->getMainRequest()?->getClientIp());
 
             $this->entityManager->persist($user);

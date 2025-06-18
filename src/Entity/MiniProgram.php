@@ -3,6 +3,7 @@
 namespace AlipayMiniProgramBundle\Entity;
 
 use AlipayMiniProgramBundle\Repository\MiniProgramRepository;
+use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Tourze\DoctrineRandomBundle\Attribute\RandomStringColumn;
@@ -20,9 +21,9 @@ use Tourze\EasyAdmin\Attribute\Filter\Keyword;
 #[Editable]
 #[Creatable]
 #[ORM\Entity(repositoryClass: MiniProgramRepository::class)]
-#[ORM\Table(name: 'alipay_mini_program')]
-#[ORM\HasLifecycleCallbacks]
-class MiniProgram
+#[ORM\Table(name: 'alipay_mini_program', options: ['comment' => '支付宝小程序配置表'])]
+#[AsEntityListener]
+class MiniProgram implements \Stringable
 {
     #[ListColumn(order: -1)]
     #[ExportColumn]
@@ -50,78 +51,48 @@ class MiniProgram
         return $this;
     }
 
-    /**
-     * 小程序名称
-     */
     #[ListColumn]
     #[FormField]
     #[ORM\Column(length: 64, options: ['comment' => '小程序名称'])]
     private ?string $name = null;
 
-    /**
-     * 支付宝小程序的 AppID
-     */
     #[ListColumn]
     #[FormField]
     #[ORM\Column(length: 64, options: ['comment' => '小程序 AppID'])]
     private ?string $appId = null;
 
-    /**
-     * 支付宝小程序的私钥
-     */
     #[FormField]
-    #[ORM\Column(type: 'text', options: ['comment' => '应用私钥'])]
+    #[ORM\Column(type: Types::TEXT, options: ['comment' => '应用私钥'])]
     private ?string $privateKey = null;
 
-    /**
-     * 支付宝公钥
-     */
     #[FormField]
-    #[ORM\Column(type: 'text', options: ['comment' => '支付宝公钥'])]
+    #[ORM\Column(type: Types::TEXT, options: ['comment' => '支付宝公钥'])]
     private ?string $alipayPublicKey = null;
 
-    /**
-     * AES密钥
-     */
     #[FormField]
     #[ORM\Column(length: 64, nullable: true, options: ['comment' => 'AES密钥'])]
     private ?string $encryptKey = null;
 
-    /**
-     * 是否是沙箱环境
-     */
     #[ListColumn]
     #[FormField]
     #[BoolColumn]
     #[ORM\Column(options: ['comment' => '是否为沙箱环境'])]
     private bool $sandbox = false;
 
-    /**
-     * 签名类型，RSA2或RSA
-     */
     #[ListColumn]
     #[FormField]
     #[ORM\Column(length: 8, options: ['comment' => '签名类型，RSA2或RSA'])]
     private string $signType = 'RSA2';
 
-    /**
-     * 支付宝网关
-     */
     #[ListColumn]
     #[FormField]
     #[ORM\Column(length: 128, options: ['comment' => '支付宝网关地址'])]
     private string $gatewayUrl = 'https://openapi.alipay.com/gateway.do';
 
-    /**
-     * 授权回调地址
-     */
     #[FormField]
-    #[ORM\Column(length: 255, nullable: true)]
+    #[ORM\Column(length: 255, nullable: true, options: ['comment' => '授权回调地址'])]
     private ?string $authRedirectUrl = null;
 
-    /**
-     * 备注说明
-     */
     #[FormField]
     #[ORM\Column(length: 255, nullable: true, options: ['comment' => '备注说明'])]
     private ?string $remark = null;
@@ -251,5 +222,10 @@ class MiniProgram
         $this->remark = $remark;
 
         return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->name ?? $this->appId ?? 'Alipay MiniProgram #' . ($this->id ?? 0);
     }
 }

@@ -99,8 +99,6 @@ class SaveAlipayMiniProgramFormIdTest extends TestCase
             ->willReturn($formId);
 
         $result = $this->procedure->execute();
-
-        $this->assertIsArray($result);
         $this->assertArrayHasKey('id', $result);
         $this->assertArrayHasKey('expiredTime', $result);
         $this->assertSame($formId->getId(), $result['id']);

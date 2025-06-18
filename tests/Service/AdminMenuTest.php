@@ -19,8 +19,6 @@ class AdminMenuTest extends TestCase
     public function test_get_menu_items_returns_correct_structure(): void
     {
         $menuItems = AdminMenu::getMenuItems();
-
-        $this->assertIsArray($menuItems);
         $this->assertCount(8, $menuItems); // 1个section + 7个crud链接
     }
 
@@ -51,8 +49,6 @@ class AdminMenuTest extends TestCase
     public function test_get_simple_menu_items_returns_correct_structure(): void
     {
         $menuItems = AdminMenu::getSimpleMenuItems();
-
-        $this->assertIsArray($menuItems);
         $this->assertCount(4, $menuItems); // 1个section + 3个crud链接
     }
 

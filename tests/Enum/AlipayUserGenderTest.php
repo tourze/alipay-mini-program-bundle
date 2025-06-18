@@ -90,8 +90,6 @@ class AlipayUserGenderTest extends TestCase
     public function test_to_select_item_trait_method(): void
     {
         $femaleItem = AlipayUserGender::FEMALE->toSelectItem();
-        
-        $this->assertIsArray($femaleItem);
         $this->assertArrayHasKey('value', $femaleItem);
         $this->assertArrayHasKey('label', $femaleItem);
         $this->assertArrayHasKey('text', $femaleItem);
@@ -105,8 +103,6 @@ class AlipayUserGenderTest extends TestCase
     public function test_gen_options_trait_method(): void
     {
         $options = AlipayUserGender::genOptions();
-        
-        $this->assertIsArray($options);
         $this->assertCount(2, $options);
         
         foreach ($options as $option) {

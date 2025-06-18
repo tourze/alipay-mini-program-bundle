@@ -3,6 +3,7 @@
 namespace AlipayMiniProgramBundle\Entity;
 
 use AlipayMiniProgramBundle\Repository\PhoneRepository;
+use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -12,9 +13,9 @@ use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
 use Tourze\EasyAdmin\Attribute\Column\ListColumn;
 
 #[ORM\Entity(repositoryClass: PhoneRepository::class)]
-#[ORM\Table(name: 'alipay_mini_program_phone')]
-#[ORM\HasLifecycleCallbacks]
-class Phone
+#[ORM\Table(name: 'alipay_mini_program_phone', options: ['comment' => '手机号码表'])]
+#[AsEntityListener]
+class Phone implements \Stringable
 {
     #[ListColumn(order: -1)]
     #[ExportColumn]
@@ -83,5 +84,10 @@ class Phone
         }
 
         return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->number ?? 'Phone #' . ($this->id ?? 0);
     }
 }

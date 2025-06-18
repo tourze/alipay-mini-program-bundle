@@ -5,6 +5,7 @@ namespace AlipayMiniProgramBundle\MessageHandler;
 use Alipay\OpenAPISDK\Api\AlipayUserInfoApi;
 use Alipay\OpenAPISDK\Util\AlipayConfigUtil;
 use Alipay\OpenAPISDK\Util\Model\AlipayConfig;
+use AlipayMiniProgramBundle\Enum\AlipayUserGender;
 use AlipayMiniProgramBundle\Message\UpdateUserInfoMessage;
 use AlipayMiniProgramBundle\Repository\UserRepository;
 use Carbon\Carbon;
@@ -26,7 +27,7 @@ class UpdateUserInfoHandler
     public function __invoke(UpdateUserInfoMessage $message): void
     {
         $user = $this->userRepository->find($message->getUserId());
-        if (!$user) {
+        if ($user === null) {
             return;
         }
 
@@ -66,8 +67,11 @@ class UpdateUserInfoHandler
         $user->setAvatar($userInfoResponse->getAvatar());
         $user->setProvince($userInfoResponse->getProvince());
         $user->setCity($userInfoResponse->getCity());
-        $user->setGender($userInfoResponse->getGender());
-        $user->setLastInfoUpdateTime(Carbon::now());
+        $gender = $userInfoResponse->getGender();
+        if ($gender !== null) {
+            $user->setGender(AlipayUserGender::from($gender));
+        }
+        $user->setLastInfoUpdateTime(Carbon::now()->toDateTimeImmutable());
         $this->entityManager->persist($user);
         $this->entityManager->flush();
     }

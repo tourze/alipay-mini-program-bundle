@@ -6,6 +6,7 @@ use Alipay\OpenAPISDK\Api\AlipayOpenAppMiniTemplatemessageApi;
 use Alipay\OpenAPISDK\Model\AlipayOpenAppMiniTemplatemessageSendModel;
 use Alipay\OpenAPISDK\Util\Model\AlipayConfig;
 use AlipayMiniProgramBundle\Entity\TemplateMessage;
+use AlipayMiniProgramBundle\Repository\TemplateMessageRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 class TemplateMessageService
@@ -75,8 +76,9 @@ class TemplateMessageService
      */
     public function sendPendingMessages(int $limit = 10): void
     {
-        $messages = $this->entityManager->getRepository(TemplateMessage::class)
-            ->findUnsentMessages($limit);
+        $repository = $this->entityManager->getRepository(TemplateMessage::class);
+        assert($repository instanceof TemplateMessageRepository);
+        $messages = $repository->findUnsentMessages($limit);
 
         foreach ($messages as $message) {
             $this->send($message);

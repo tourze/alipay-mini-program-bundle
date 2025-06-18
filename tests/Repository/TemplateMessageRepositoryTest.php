@@ -188,8 +188,6 @@ class TemplateMessageRepositoryTest extends TestCase
             ->willReturn([]);
         
         $result = $repository->findUnsentMessages($limit);
-        
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 

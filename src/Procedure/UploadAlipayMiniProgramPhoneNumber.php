@@ -57,7 +57,7 @@ class UploadAlipayMiniProgramPhoneNumber extends LockableProcedure
             }
             // 解密手机号
             $encryptKey = $miniProgram->getEncryptKey();
-            if (!$encryptKey) {
+            if ($encryptKey === null) {
                 throw new ApiException('未配置加密密钥');
             }
 
@@ -74,7 +74,7 @@ class UploadAlipayMiniProgramPhoneNumber extends LockableProcedure
             }
 
             $phoneData = json_decode($decrypted, true);
-            if (!$phoneData) {
+            if ($phoneData === null || $phoneData === false) {
                 throw new ApiException('解析数据失败：' . json_last_error_msg());
             }
 
@@ -88,10 +88,12 @@ class UploadAlipayMiniProgramPhoneNumber extends LockableProcedure
             // 获取或创建业务用户
             $bizUser = $this->userService->getBizUser($user);
 
-            // 更新业务用户手机号
-            $bizUser->setMobile($phoneData['mobile']);
-            $this->entityManager->persist($bizUser);
-            $this->entityManager->flush();
+            // 更新业务用户手机号（仅当业务用户支持setMobile方法时）
+            if (method_exists($bizUser, 'setMobile')) {
+                $bizUser->setMobile($phoneData['mobile']);
+                $this->entityManager->persist($bizUser);
+                $this->entityManager->flush();
+            }
         } catch (UniqueConstraintViolationException $exception) {
             throw new ApiException('请返回重试', previous: $exception);
         }

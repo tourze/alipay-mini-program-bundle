@@ -8,7 +8,6 @@ use AlipayMiniProgramBundle\Entity\User;
 use AlipayMiniProgramBundle\Enum\AlipayUserGender;
 use AlipayMiniProgramBundle\Repository\PhoneRepository;
 use AlipayMiniProgramBundle\Repository\UserRepository;
-use BizUserBundle\Entity\BizUser;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Security\User\UserLoaderInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -52,7 +51,7 @@ class UserService
         if (isset($userInfo['gender'])) {
             $user->setGender(AlipayUserGender::from($userInfo['gender']));
         }
-        $user->setLastInfoUpdateTime(new \DateTime());
+        $user->setLastInfoUpdateTime(new \DateTimeImmutable());
 
         $this->entityManager->persist($user);
         $this->entityManager->flush();
@@ -65,7 +64,7 @@ class UserService
     {
         // 查找或创建手机号码记录
         $phone = $this->phoneRepository->findByNumber($phoneNumber);
-        if (!$phone) {
+        if ($phone === null) {
             $phone = new Phone();
             $phone->setNumber($phoneNumber);
             $this->entityManager->persist($phone);
@@ -75,7 +74,7 @@ class UserService
         $userPhone = new AlipayUserPhone();
         $userPhone->setUser($user);
         $userPhone->setPhone($phone);
-        $userPhone->setVerifiedTime(new \DateTime());
+        $userPhone->setVerifiedTime(new \DateTimeImmutable());
 
         $this->entityManager->persist($userPhone);
         $this->entityManager->flush();
@@ -123,35 +122,23 @@ class UserService
         //        }
 
         $bizUser = $this->userLoader->loadUserByIdentifier($user->getOpenId());
-        if ($bizUser) {
+        if ($bizUser !== null) {
             return $bizUser;
         }
 
-        // 如果没有找到，创建新用户
-        $bizUser = new BizUser();
-        $bizUser->setUsername($user->getOpenId());
-        $bizUser->setIdentity($user->getOpenId());
-        if ($phone) {
-            $bizUser->setMobile($phone);
-        }
-        $bizUser->setNickName($user->getNickName() ?? '支付宝用户');
-        $bizUser->setAvatar($user->getAvatar());
-        $bizUser->setValid(true);
-
-        $this->entityManager->persist($bizUser);
-        $this->entityManager->flush();
-
-        return $bizUser;
+        // 如果没有找到，抛出异常，不应该在这里直接创建BizUser
+        throw new ApiException('未找到对应的业务用户，请先创建用户');
     }
 
     /**
      * 通过业务用户查找支付宝用户
      */
-    public function getAlipayUser(BizUser|UserInterface $bizUser): ?User
+    public function getAlipayUser(UserInterface $bizUser): ?User
     {
         // 1. 先通过 username 查找（username 是 openId）
-        $alipayUser = $this->alipayUserRepository->findOneBy(['openId' => $bizUser->getUsername()]);
-        if ($alipayUser) {
+        $username = $bizUser->getUserIdentifier();
+        $alipayUser = $this->alipayUserRepository->findOneBy(['openId' => $username]);
+        if ($alipayUser !== null) {
             return $alipayUser;
         }
 
@@ -173,10 +160,10 @@ class UserService
      *
      * @throws ApiException 如果找不到支付宝用户
      */
-    public function requireAlipayUser(BizUser|UserInterface $bizUser): User
+    public function requireAlipayUser(UserInterface $bizUser): User
     {
         $alipayUser = $this->getAlipayUser($bizUser);
-        if (!$alipayUser) {
+        if ($alipayUser === null) {
             throw new ApiException('未找到对应的支付宝用户');
         }
 

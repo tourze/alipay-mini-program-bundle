@@ -3,17 +3,18 @@
 namespace AlipayMiniProgramBundle\Entity;
 
 use AlipayMiniProgramBundle\Repository\TemplateMessageRepository;
+use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
-use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
-use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
+use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
 use Tourze\EasyAdmin\Attribute\Column\ListColumn;
 
 #[ORM\Entity(repositoryClass: TemplateMessageRepository::class)]
-#[ORM\Table(name: 'amptm_template_message')]
-class TemplateMessage
+#[ORM\Table(name: 'amptm_template_message', options: ['comment' => '支付宝小程序模板消息表'])]
+#[AsEntityListener]
+class TemplateMessage implements \Stringable
 {
     #[ListColumn(order: -1)]
     #[ExportColumn]
@@ -22,13 +23,6 @@ class TemplateMessage
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
     private ?int $id = 0;
 
-    #[CreatedByColumn]
-    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
-    private ?string $createdBy = null;
-
-    #[UpdatedByColumn]
-    #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
-    private ?string $updatedBy = null;
 
     #[ORM\ManyToOne(targetEntity: MiniProgram::class)]
     #[ORM\JoinColumn(nullable: false)]
@@ -60,35 +54,13 @@ class TemplateMessage
     private ?string $sendResult = null;
 
     use TimestampableAware;
+    use BlameableAware;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function setCreatedBy(?string $createdBy): self
-    {
-        $this->createdBy = $createdBy;
-
-        return $this;
-    }
-
-    public function getCreatedBy(): ?string
-    {
-        return $this->createdBy;
-    }
-
-    public function setUpdatedBy(?string $updatedBy): self
-    {
-        $this->updatedBy = $updatedBy;
-
-        return $this;
-    }
-
-    public function getUpdatedBy(): ?string
-    {
-        return $this->updatedBy;
-    }
 
     public function getMiniProgram(): MiniProgram
     {
@@ -196,5 +168,13 @@ class TemplateMessage
         $this->toOpenId = $toOpenId;
 
         return $this;
+    }
+
+    public function __toString(): string
+    {
+        return sprintf('模板消息:%s - 接收者:%s',
+            $this->templateId,
+            $this->toUser->getNickName() ?? $this->toOpenId
+        );
     }
 }

@@ -18,6 +18,8 @@ use Tourze\Symfony\CronJob\Attribute\AsCronTask;
 )]
 class SendPendingTemplateMessagesCommand extends Command
 {
+    public const NAME = 'alipay:template-message:send-pending';
+
     public function __construct(
         private readonly TemplateMessageService $templateMessageService,
     ) {

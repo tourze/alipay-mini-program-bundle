@@ -26,7 +26,7 @@ class FormIdService
         $formIdEntity->setUser($user);
         $formIdEntity->setFormId($formId);
         // formId有效期为7天
-        $formIdEntity->setExpireTime(new \DateTime('+7 days'));
+        $formIdEntity->setExpireTime(new \DateTimeImmutable('+7 days'));
         $formIdEntity->setUsedCount(0);
 
         $this->entityManager->persist($formIdEntity);
@@ -46,7 +46,7 @@ class FormIdService
     public function getAvailableFormId(MiniProgram $miniProgram, User $user): ?FormId
     {
         $formId = $this->formIdRepository->findAvailableFormId($miniProgram, $user);
-        if ($formId) {
+        if ($formId !== null) {
             $formId->incrementUsedCount();
             $this->entityManager->flush();
         }

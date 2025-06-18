@@ -4,6 +4,7 @@ namespace AlipayMiniProgramBundle\Entity;
 
 use AlipayMiniProgramBundle\Enum\AlipayUserGender;
 use AlipayMiniProgramBundle\Repository\UserRepository;
+use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -13,9 +14,9 @@ use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
 use Tourze\EasyAdmin\Attribute\Column\ListColumn;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ORM\Table(name: 'alipay_mini_program_user')]
-#[ORM\HasLifecycleCallbacks]
-class User
+#[ORM\Table(name: 'alipay_mini_program_user', options: ['comment' => '支付宝小程序用户表'])]
+#[AsEntityListener]
+class User implements \Stringable
 {
     #[ListColumn(order: -1)]
     #[ExportColumn]
@@ -46,8 +47,8 @@ class User
     #[ORM\Column(length: 8, enumType: AlipayUserGender::class, nullable: true, options: ['comment' => '用户性别'])]
     private ?AlipayUserGender $gender = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '最后一次获取用户信息的时间'])]
-    private ?\DateTimeInterface $lastInfoUpdateTime = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '最后一次获取用户信息的时间'])]
+    private ?\DateTimeImmutable $lastInfoUpdateTime = null;
 
     /**
      * @var Collection<int, AuthCode>
@@ -158,14 +159,16 @@ class User
         return $this;
     }
 
-    public function getLastInfoUpdateTime(): ?\DateTimeInterface
+    public function getLastInfoUpdateTime(): ?\DateTimeImmutable
     {
         return $this->lastInfoUpdateTime;
     }
 
     public function setLastInfoUpdateTime(?\DateTimeInterface $lastInfoUpdateTime): static
     {
-        $this->lastInfoUpdateTime = $lastInfoUpdateTime;
+        $this->lastInfoUpdateTime = $lastInfoUpdateTime instanceof \DateTimeImmutable 
+            ? $lastInfoUpdateTime 
+            : ($lastInfoUpdateTime !== null ? \DateTimeImmutable::createFromInterface($lastInfoUpdateTime) : null);
 
         return $this;
     }
@@ -238,5 +241,10 @@ class User
         $latestUserPhone = $this->userPhones->last();
 
         return $latestUserPhone ? $latestUserPhone->getPhone() : null;
+    }
+
+    public function __toString(): string
+    {
+        return $this->nickName ?? $this->openId ?? 'User #' . ($this->id ?? 0);
     }
 }

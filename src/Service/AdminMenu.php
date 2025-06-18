@@ -16,7 +16,7 @@ class AdminMenu
     /**
      * 获取支付宝小程序模块的菜单配置
      *
-     * @return MenuItem[]
+     * @return mixed[]
      */
     public static function getMenuItems(): array
     {
@@ -49,7 +49,7 @@ class AdminMenu
     /**
      * 获取简化版菜单（只包含主要功能）
      *
-     * @return MenuItem[]
+     * @return mixed[]
      */
     public static function getSimpleMenuItems(): array
     {

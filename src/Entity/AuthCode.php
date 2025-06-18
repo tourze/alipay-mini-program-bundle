@@ -4,6 +4,7 @@ namespace AlipayMiniProgramBundle\Entity;
 
 use AlipayMiniProgramBundle\Enum\AlipayAuthScope;
 use AlipayMiniProgramBundle\Repository\AuthCodeRepository;
+use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Tourze\DoctrineIpBundle\Attribute\CreateIpColumn;
@@ -13,9 +14,9 @@ use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
 use Tourze\EasyAdmin\Attribute\Column\ListColumn;
 
 #[ORM\Entity(repositoryClass: AuthCodeRepository::class)]
-#[ORM\Table(name: 'alipay_mini_program_auth_code')]
-#[ORM\HasLifecycleCallbacks]
-class AuthCode
+#[ORM\Table(name: 'alipay_mini_program_auth_code', options: ['comment' => '支付宝小程序授权码表'])]
+#[AsEntityListener]
+class AuthCode implements \Stringable
 {
     #[ListColumn(order: -1)]
     #[ExportColumn]
@@ -55,8 +56,8 @@ class AuthCode
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => '刷新令牌的有效时间，单位：秒'])]
     private ?int $reExpiresIn = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, options: ['comment' => '授权开始时间'])]
-    private ?\DateTimeInterface $authStart = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, options: ['comment' => '授权开始时间'])]
+    private ?\DateTimeImmutable $authStart = null;
 
     #[ORM\Column(length: 128, nullable: true, options: ['comment' => '签名'])]
     private ?string $sign = null;
@@ -196,14 +197,14 @@ class AuthCode
         return $this;
     }
 
-    public function getAuthStart(): ?\DateTimeInterface
+    public function getAuthStart(): ?\DateTimeImmutable
     {
         return $this->authStart;
     }
 
     public function setAuthStart(\DateTimeInterface $authStart): static
     {
-        $this->authStart = $authStart;
+        $this->authStart = $authStart instanceof \DateTimeImmutable ? $authStart : \DateTimeImmutable::createFromInterface($authStart);
 
         return $this;
     }
@@ -242,5 +243,13 @@ class AuthCode
     public function getUpdatedFromIp(): ?string
     {
         return $this->updatedFromIp;
+    }
+
+    public function __toString(): string
+    {
+        return sprintf('授权码:%s - 用户:%s',
+            substr($this->authCode ?? '', 0, 8) . '...',
+            $this->alipayUser?->getNickName() ?? $this->openId ?? 'unknown'
+        );
     }
 }

@@ -40,7 +40,7 @@ class SaveAlipayMiniProgramFormId extends LockableProcedure
     public function execute(): array
     {
         $miniProgram = $this->entityManager->find(MiniProgram::class, $this->miniProgramId);
-        if (!$miniProgram) {
+        if ($miniProgram === null) {
             throw new NotFoundHttpException('小程序不存在');
         }
 

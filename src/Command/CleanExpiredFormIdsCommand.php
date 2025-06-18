@@ -14,6 +14,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 )]
 class CleanExpiredFormIdsCommand extends Command
 {
+    public const NAME = 'alipay:mini-program:clean-expired-form-ids';
+
     public function __construct(
         private readonly FormIdService $formIdService,
     ) {
