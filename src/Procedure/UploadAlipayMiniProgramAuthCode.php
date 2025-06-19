@@ -14,7 +14,7 @@ use AlipayMiniProgramBundle\Message\UpdateUserInfoMessage;
 use AlipayMiniProgramBundle\Repository\MiniProgramRepository;
 use AlipayMiniProgramBundle\Repository\UserRepository;
 use AlipayMiniProgramBundle\Service\UserService;
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpClient\Exception\TimeoutException;
@@ -149,7 +149,7 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
             $authCodeEntity->setRefreshToken($response->getRefreshToken());
             $authCodeEntity->setExpiresIn((int) $response->getExpiresIn());
             $authCodeEntity->setReExpiresIn((int) $response->getReExpiresIn());
-            $authCodeEntity->setAuthStart(Carbon::createFromTimestamp($response->getAuthStart(), date_default_timezone_get())->toDateTimeImmutable());
+            $authCodeEntity->setAuthStart(CarbonImmutable::createFromTimestamp($response->getAuthStart(), date_default_timezone_get())->toDateTimeImmutable());
             $authCodeEntity->setCreatedFromIp($this->requestStack->getMainRequest()?->getClientIp());
 
             $this->entityManager->persist($user);

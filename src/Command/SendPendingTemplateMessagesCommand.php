@@ -13,7 +13,7 @@ use Tourze\Symfony\CronJob\Attribute\AsCronTask;
 
 #[AsCronTask('* * * * *')]
 #[AsCommand(
-    name: 'alipay:template-message:send-pending',
+    name: self::NAME,
     description: '发送待发送的支付宝小程序模板消息',
 )]
 class SendPendingTemplateMessagesCommand extends Command

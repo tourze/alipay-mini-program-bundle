@@ -9,7 +9,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
-    name: 'alipay:mini-program:clean-expired-form-ids',
+    name: self::NAME,
     description: '清理过期的formId',
 )]
 class CleanExpiredFormIdsCommand extends Command

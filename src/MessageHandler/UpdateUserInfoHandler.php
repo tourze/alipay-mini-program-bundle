@@ -8,7 +8,7 @@ use Alipay\OpenAPISDK\Util\Model\AlipayConfig;
 use AlipayMiniProgramBundle\Enum\AlipayUserGender;
 use AlipayMiniProgramBundle\Message\UpdateUserInfoMessage;
 use AlipayMiniProgramBundle\Repository\UserRepository;
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -71,7 +71,7 @@ class UpdateUserInfoHandler
         if ($gender !== null) {
             $user->setGender(AlipayUserGender::from($gender));
         }
-        $user->setLastInfoUpdateTime(Carbon::now()->toDateTimeImmutable());
+        $user->setLastInfoUpdateTime(CarbonImmutable::now()->toDateTimeImmutable());
         $this->entityManager->persist($user);
         $this->entityManager->flush();
     }
