@@ -108,15 +108,14 @@ class UpdateUserInfoMessageTest extends TestCase
         $userIdParam = $parameters[0];
         $authTokenParam = $parameters[1];
         
-        $this->assertSame('int', $userIdParam->getType()->getName());
-        $this->assertSame('string', $authTokenParam->getType()->getName());
+        $userIdType = $userIdParam->getType();
+        $authTokenType = $authTokenParam->getType();
+        $this->assertInstanceOf(\ReflectionNamedType::class, $userIdType);
+        $this->assertInstanceOf(\ReflectionNamedType::class, $authTokenType);
+        $this->assertSame('int', $userIdType->getName());
+        $this->assertSame('string', $authTokenType->getName());
     }
 
-    public function test_getter_methods_exist(): void
-    {
-        $this->assertTrue(method_exists(UpdateUserInfoMessage::class, 'getUserId'));
-        $this->assertTrue(method_exists(UpdateUserInfoMessage::class, 'getAuthToken'));
-    }
 
     public function test_getter_methods_return_correct_types(): void
     {
@@ -125,8 +124,12 @@ class UpdateUserInfoMessageTest extends TestCase
         $getUserIdMethod = $reflection->getMethod('getUserId');
         $getAuthTokenMethod = $reflection->getMethod('getAuthToken');
         
-        $this->assertSame('int', $getUserIdMethod->getReturnType()->getName());
-        $this->assertSame('string', $getAuthTokenMethod->getReturnType()->getName());
+        $getUserIdReturnType = $getUserIdMethod->getReturnType();
+        $getAuthTokenReturnType = $getAuthTokenMethod->getReturnType();
+        $this->assertInstanceOf(\ReflectionNamedType::class, $getUserIdReturnType);
+        $this->assertInstanceOf(\ReflectionNamedType::class, $getAuthTokenReturnType);
+        $this->assertSame('int', $getUserIdReturnType->getName());
+        $this->assertSame('string', $getAuthTokenReturnType->getName());
     }
 
     public function test_message_immutability(): void

@@ -103,13 +103,6 @@ class UserRepositoryTest extends TestCase
         $this->assertNull($result);
     }
 
-    public function test_repository_custom_methods_exist(): void
-    {
-        $repository = new UserRepository($this->registry);
-        
-        $this->assertTrue(method_exists($repository, 'findByUserId'));
-        $this->assertTrue(method_exists($repository, 'findByOpenId'));
-    }
 
     public function test_inherited_methods_exist(): void
     {

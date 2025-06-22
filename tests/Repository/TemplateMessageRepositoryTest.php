@@ -40,10 +40,6 @@ class TemplateMessageRepositoryTest extends TestCase
         $this->assertNotNull($constructor);
     }
 
-    public function test_find_unsent_messages_method_exists(): void
-    {
-        $this->assertTrue(method_exists($this->repository, 'findUnsentMessages'));
-    }
 
     public function test_find_unsent_messages_with_default_limit(): void
     {
@@ -226,6 +222,7 @@ class TemplateMessageRepositoryTest extends TestCase
         $returnType = $reflection->getReturnType();
         
         $this->assertNotNull($returnType);
+        $this->assertInstanceOf(\ReflectionNamedType::class, $returnType);
         $this->assertSame('array', $returnType->getName());
     }
 } 

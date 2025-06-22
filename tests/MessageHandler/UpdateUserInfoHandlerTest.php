@@ -132,10 +132,6 @@ class UpdateUserInfoHandlerTest extends TestCase
         $this->assertTrue($hasAsMessageHandlerAttribute, 'Handler should have AsMessageHandler attribute');
     }
 
-    public function test_invoke_method_exists(): void
-    {
-        $this->assertTrue(method_exists($this->handler, '__invoke'));
-    }
 
     public function test_invoke_method_accepts_update_user_info_message(): void
     {
@@ -147,7 +143,9 @@ class UpdateUserInfoHandlerTest extends TestCase
 
         $parameter = $parameters[0];
         $this->assertSame('message', $parameter->getName());
-        $this->assertSame(UpdateUserInfoMessage::class, $parameter->getType()->getName());
+        $type = $parameter->getType();
+        $this->assertInstanceOf(\ReflectionNamedType::class, $type);
+        $this->assertSame(UpdateUserInfoMessage::class, $type->getName());
     }
 
     public function test_invoke_method_returns_void(): void
@@ -157,16 +155,14 @@ class UpdateUserInfoHandlerTest extends TestCase
 
         $returnType = $invokeMethod->getReturnType();
         $this->assertNotNull($returnType);
+        $this->assertInstanceOf(\ReflectionNamedType::class, $returnType);
         $this->assertSame('void', $returnType->getName());
     }
 
     public function test_handler_class_implements_correct_pattern(): void
     {
-        // 检查类是否具有正确的结构
-        $this->assertTrue(method_exists($this->handler, '__invoke'));
-
         // 检查是否有正确的构造函数依赖
-        $reflection = new \ReflectionClass($this->handler);
+        $reflection = new \ReflectionClass(UpdateUserInfoHandler::class);
         $constructor = $reflection->getConstructor();
         $this->assertNotNull($constructor);
 

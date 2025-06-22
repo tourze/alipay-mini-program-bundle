@@ -9,12 +9,12 @@ use AlipayMiniProgramBundle\Enum\AlipayUserGender;
 use AlipayMiniProgramBundle\Repository\PhoneRepository;
 use AlipayMiniProgramBundle\Repository\UserRepository;
 use AlipayMiniProgramBundle\Service\UserService;
-use BizUserBundle\Entity\BizUser;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bridge\Doctrine\Security\User\UserLoaderInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Tourze\JsonRPC\Core\Exception\ApiException;
 
 class UserServiceTest extends TestCase
@@ -226,11 +226,11 @@ class UserServiceTest extends TestCase
         $this->assertEquals(['13800138000', '13900139000'], $result);
     }
     
-    public function testGetBizUser_whenUserExists(): void
+    public function testGetUserInterface_whenUserExists(): void
     {
         // Arrange
         $user = $this->createMock(User::class);
-        $bizUser = $this->createMock(BizUser::class);
+        $bizUser = $this->createMock(UserInterface::class);
         
         $user->expects($this->once())
             ->method('getOpenId')
@@ -251,11 +251,11 @@ class UserServiceTest extends TestCase
     public function testGetAlipayUser_whenFoundByUsername(): void
     {
         // Arrange
-        $bizUser = $this->createMock(BizUser::class);
+        $bizUser = $this->createMock(UserInterface::class);
         $alipayUser = $this->createMock(User::class);
         
         $bizUser->expects($this->once())
-            ->method('getUsername')
+            ->method('getUserIdentifier')
             ->willReturn('test_open_id');
             
         $this->alipayUserRepository->expects($this->once())
@@ -273,10 +273,10 @@ class UserServiceTest extends TestCase
     public function testGetAlipayUser_whenNotFound(): void
     {
         // Arrange
-        $bizUser = $this->createMock(BizUser::class);
+        $bizUser = $this->createMock(UserInterface::class);
         
         $bizUser->expects($this->once())
-            ->method('getUsername')
+            ->method('getUserIdentifier')
             ->willReturn('test_open_id');
             
         $this->alipayUserRepository->expects($this->once())
@@ -294,11 +294,11 @@ class UserServiceTest extends TestCase
     public function testRequireAlipayUser_whenUserExists(): void
     {
         // Arrange
-        $bizUser = $this->createMock(BizUser::class);
+        $bizUser = $this->createMock(UserInterface::class);
         $alipayUser = $this->createMock(User::class);
         
         $bizUser->expects($this->once())
-            ->method('getUsername')
+            ->method('getUserIdentifier')
             ->willReturn('test_open_id');
             
         $this->alipayUserRepository->expects($this->once())
@@ -316,10 +316,10 @@ class UserServiceTest extends TestCase
     public function testRequireAlipayUser_whenUserDoesNotExist(): void
     {
         // Arrange
-        $bizUser = $this->createMock(BizUser::class);
+        $bizUser = $this->createMock(UserInterface::class);
         
         $bizUser->expects($this->once())
-            ->method('getUsername')
+            ->method('getUserIdentifier')
             ->willReturn('test_open_id');
             
         $this->alipayUserRepository->expects($this->once())

@@ -13,7 +13,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 class CleanExpiredFormIdsCommandTest extends TestCase
 {
     private FormIdService|MockObject $formIdService;
-    private CleanExpiredFormIdsCommand|MockObject $command;
+    private CleanExpiredFormIdsCommand $command;
 
     protected function setUp(): void
     {
@@ -100,10 +100,6 @@ class CleanExpiredFormIdsCommandTest extends TestCase
         $this->assertSame(Command::SUCCESS, $result);
     }
 
-    public function test_execute_method_exists(): void
-    {
-        $this->assertTrue(method_exists($this->command, 'execute'));
-    }
 
     public function test_command_extends_command_class(): void
     {
@@ -125,7 +121,9 @@ class CleanExpiredFormIdsCommandTest extends TestCase
 
         $parameter = $parameters[0];
         $this->assertSame('formIdService', $parameter->getName());
-        $this->assertSame(FormIdService::class, $parameter->getType()->getName());
+        $type = $parameter->getType();
+        $this->assertInstanceOf(\ReflectionNamedType::class, $type);
+        $this->assertSame(FormIdService::class, $type->getName());
     }
 
     public function test_command_has_as_command_attribute(): void
@@ -160,6 +158,6 @@ class CleanExpiredFormIdsCommandTest extends TestCase
 
         $result = $this->command->run($input, $output);
 
-        $this->assertIsInt($result);
+        $this->assertSame(Command::SUCCESS, $result);
     }
 }

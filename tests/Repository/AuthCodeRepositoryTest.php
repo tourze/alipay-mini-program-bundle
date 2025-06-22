@@ -88,12 +88,6 @@ class AuthCodeRepositoryTest extends TestCase
         $this->assertNull($result);
     }
 
-    public function test_find_by_auth_code_method_exists(): void
-    {
-        $repository = new AuthCodeRepository($this->registry);
-
-        $this->assertTrue(method_exists($repository, 'findByAuthCode'));
-    }
 
     public function test_inherited_methods_exist(): void
     {

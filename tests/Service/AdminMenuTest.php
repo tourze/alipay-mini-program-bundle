@@ -147,11 +147,4 @@ class AdminMenuTest extends TestCase
         $this->assertCount(8, $fullMenuItems);   // 1个section + 7个crud
     }
 
-    /**
-     * 辅助方法：检查MenuItem是否为section
-     */
-    private function isMenuItemSection($item): bool
-    {
-        return $item instanceof SectionMenuItem;
-    }
 }

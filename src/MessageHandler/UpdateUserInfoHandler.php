@@ -20,9 +20,7 @@ class UpdateUserInfoHandler
         private readonly UserRepository $userRepository,
         private readonly LoggerInterface $logger,
         private readonly EntityManagerInterface $entityManager,
-    )
-    {
-    }
+    ) {}
 
     public function __invoke(UpdateUserInfoMessage $message): void
     {
@@ -47,7 +45,10 @@ class UpdateUserInfoHandler
         // $alipayConfig->setAppCertPath('../appCertPublicKey.crt');
         // $alipayConfig->setAlipayPublicCertPath('../alipayCertPublicKey_RSA2.crt');
         // $alipayConfig->setRootCertPath('../alipayRootCert.crt');
-        $alipayConfig->setEncryptKey($user->getMiniProgram()->getEncryptKey());
+        $encryptKey = $user->getMiniProgram()->getEncryptKey();
+        if ($encryptKey !== null) {
+            $alipayConfig->setEncryptKey($encryptKey);
+        }
         $alipayConfigUtil = new AlipayConfigUtil($alipayConfig);
         $apiInstance->setAlipayConfigUtil($alipayConfigUtil);
 

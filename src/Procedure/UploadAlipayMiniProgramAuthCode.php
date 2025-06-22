@@ -68,8 +68,7 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
         private readonly RequestStack $requestStack,
         private readonly UserService $userService,
         private readonly AccessTokenService $accessTokenService,
-    ) {
-    }
+    ) {}
 
     public function execute(): array
     {
@@ -102,7 +101,10 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
             // $alipayConfig->setAppCertPath('../appCertPublicKey.crt');
             // $alipayConfig->setAlipayPublicCertPath('../alipayCertPublicKey_RSA2.crt');
             // $alipayConfig->setRootCertPath('../alipayRootCert.crt');
-            $alipayConfig->setEncryptKey($miniProgram->getEncryptKey());
+            $encryptKey = $miniProgram->getEncryptKey();
+            if ($encryptKey !== null) {
+                $alipayConfig->setEncryptKey($encryptKey);
+            }
             $alipayConfigUtil = new AlipayConfigUtil($alipayConfig);
             $apiInstance->setAlipayConfigUtil($alipayConfigUtil);
 

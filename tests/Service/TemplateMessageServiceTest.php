@@ -13,12 +13,14 @@ use PHPUnit\Framework\TestCase;
 class TemplateMessageServiceTest extends TestCase
 {
     private EntityManagerInterface|MockObject $entityManager;
+    private TemplateMessageRepository|MockObject $templateMessageRepository;
     private TemplateMessageService $templateMessageService;
 
     protected function setUp(): void
     {
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
-        $this->templateMessageService = new TemplateMessageService($this->entityManager);
+        $this->templateMessageRepository = $this->createMock(TemplateMessageRepository::class);
+        $this->templateMessageService = new TemplateMessageService($this->entityManager, $this->templateMessageRepository);
     }
 
     public function testSend_whenAlreadySent(): void
@@ -82,19 +84,17 @@ class TemplateMessageServiceTest extends TestCase
     
     public function testSendPendingMessages(): void
     {
-        // 我们需要先查看 TemplateMessageRepository 是否有 findUnsentMessages 方法
-        // 如果没有，则创建一个简单版本的测试
-    
         // Arrange
-        $repository = $this->createMock(TemplateMessageRepository::class);
+        $messages = [
+            $this->createMock(TemplateMessage::class),
+            $this->createMock(TemplateMessage::class),
+        ];
         
-        $this->entityManager->expects($this->once())
-            ->method('getRepository')
-            ->with(TemplateMessage::class)
-            ->willReturn($repository);
+        $this->templateMessageRepository->expects($this->once())
+            ->method('findUnsentMessages')
+            ->with(10)
+            ->willReturn($messages);
             
-        // 简单测试：我们只验证方法被调用，而不测试内部实现
-        
         // Act
         $this->templateMessageService->sendPendingMessages();
     }
@@ -102,16 +102,14 @@ class TemplateMessageServiceTest extends TestCase
     public function testSendPendingMessages_withCustomLimit(): void
     {
         // Arrange
-        $repository = $this->createMock(TemplateMessageRepository::class);
         $limit = 5;
+        $messages = [];
         
-        $this->entityManager->expects($this->once())
-            ->method('getRepository')
-            ->with(TemplateMessage::class)
-            ->willReturn($repository);
+        $this->templateMessageRepository->expects($this->once())
+            ->method('findUnsentMessages')
+            ->with($limit)
+            ->willReturn($messages);
             
-        // 简单测试：我们只验证方法被调用，而不测试内部实现
-        
         // Act
         $this->templateMessageService->sendPendingMessages($limit);
     }

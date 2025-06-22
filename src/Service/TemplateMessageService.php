@@ -13,8 +13,8 @@ class TemplateMessageService
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-    ) {
-    }
+        private readonly TemplateMessageRepository $templateMessageRepository,
+    ) {}
 
     /**
      * 发送模板消息
@@ -42,7 +42,10 @@ class TemplateMessageService
             // $alipayConfig->setAppCertPath('../appCertPublicKey.crt');
             // $alipayConfig->setAlipayPublicCertPath('../alipayCertPublicKey_RSA2.crt');
             // $alipayConfig->setRootCertPath('../alipayRootCert.crt');
-            $alipayConfig->setEncryptKey($message->getMiniProgram()->getEncryptKey());
+            $encryptKey = $message->getMiniProgram()->getEncryptKey();
+            if ($encryptKey !== null) {
+                $alipayConfig->setEncryptKey($encryptKey);
+            }
             $alipayConfigUtil = new \Alipay\OpenAPISDK\Util\AlipayConfigUtil($alipayConfig);
             $apiInstance->setAlipayConfigUtil($alipayConfigUtil);
 
@@ -76,9 +79,7 @@ class TemplateMessageService
      */
     public function sendPendingMessages(int $limit = 10): void
     {
-        $repository = $this->entityManager->getRepository(TemplateMessage::class);
-        assert($repository instanceof TemplateMessageRepository);
-        $messages = $repository->findUnsentMessages($limit);
+        $messages = $this->templateMessageRepository->findUnsentMessages($limit);
 
         foreach ($messages as $message) {
             $this->send($message);

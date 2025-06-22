@@ -104,12 +104,6 @@ class PhoneRepositoryTest extends TestCase
         $this->assertSame($expectedEntity, $result);
     }
 
-    public function test_find_by_number_method_exists(): void
-    {
-        $repository = new PhoneRepository($this->registry);
-
-        $this->assertTrue(method_exists($repository, 'findByNumber'));
-    }
 
     public function test_inherited_methods_exist(): void
     {

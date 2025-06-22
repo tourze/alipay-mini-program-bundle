@@ -256,7 +256,9 @@ class AlipaySystemOauthTokenResponseTest extends TestCase
 
         $parameter = $parameters[0];
         $this->assertSame('response', $parameter->getName());
-        $this->assertSame('stdClass', $parameter->getType()->getName());
+        $type = $parameter->getType();
+        $this->assertInstanceOf(\ReflectionNamedType::class, $type);
+        $this->assertSame('stdClass', $type->getName());
     }
 
     public function test_expires_in_conversion_edge_cases(): void

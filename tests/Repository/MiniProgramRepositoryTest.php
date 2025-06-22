@@ -134,13 +134,6 @@ class MiniProgramRepositoryTest extends TestCase
         $this->assertNull($result);
     }
 
-    public function test_repository_custom_methods_exist(): void
-    {
-        $repository = new MiniProgramRepository($this->registry);
-
-        $this->assertTrue(method_exists($repository, 'findByAppId'));
-        $this->assertTrue(method_exists($repository, 'findByCode'));
-    }
 
     public function test_inherited_methods_exist(): void
     {

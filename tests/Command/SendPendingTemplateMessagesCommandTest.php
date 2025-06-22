@@ -158,7 +158,9 @@ class SendPendingTemplateMessagesCommandTest extends TestCase
 
         $parameter = $parameters[0];
         $this->assertSame('templateMessageService', $parameter->getName());
-        $this->assertSame(TemplateMessageService::class, $parameter->getType()->getName());
+        $type = $parameter->getType();
+        $this->assertInstanceOf(\ReflectionNamedType::class, $type);
+        $this->assertSame(TemplateMessageService::class, $type->getName());
     }
 
     public function test_command_has_as_command_attribute(): void
@@ -182,13 +184,5 @@ class SendPendingTemplateMessagesCommandTest extends TestCase
         $this->assertTrue($hasCronTaskAttribute, 'Command should have AsCronTask attribute');
     }
 
-    public function test_configure_method_exists(): void
-    {
-        $this->assertTrue(method_exists($this->command, 'configure'));
-    }
 
-    public function test_execute_method_exists(): void
-    {
-        $this->assertTrue(method_exists($this->command, 'execute'));
-    }
 }

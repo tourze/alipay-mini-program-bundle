@@ -55,8 +55,12 @@ class SaveAlipayMiniProgramFormIdTest extends TestCase
         $miniProgramIdProperty = $reflection->getProperty('miniProgramId');
         $formIdProperty = $reflection->getProperty('formId');
         
-        $this->assertSame('string', $miniProgramIdProperty->getType()->getName());
-        $this->assertSame('string', $formIdProperty->getType()->getName());
+        $miniProgramIdType = $miniProgramIdProperty->getType();
+        $formIdType = $formIdProperty->getType();
+        $this->assertInstanceOf(\ReflectionNamedType::class, $miniProgramIdType);
+        $this->assertInstanceOf(\ReflectionNamedType::class, $formIdType);
+        $this->assertSame('string', $miniProgramIdType->getName());
+        $this->assertSame('string', $formIdType->getName());
     }
 
     public function test_execute_with_valid_mini_program_creates_form_id(): void
@@ -159,10 +163,6 @@ class SaveAlipayMiniProgramFormIdTest extends TestCase
         $this->assertSame(LockableProcedure::class, $parentClass->getName());
     }
 
-    public function test_execute_method_exists(): void
-    {
-        $this->assertTrue(method_exists($this->procedure, 'execute'));
-    }
 
     public function test_execute_method_returns_array(): void
     {
@@ -171,6 +171,7 @@ class SaveAlipayMiniProgramFormIdTest extends TestCase
         
         $returnType = $executeMethod->getReturnType();
         $this->assertNotNull($returnType);
+        $this->assertInstanceOf(\ReflectionNamedType::class, $returnType);
         $this->assertSame('array', $returnType->getName());
     }
 

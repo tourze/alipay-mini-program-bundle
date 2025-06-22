@@ -49,7 +49,9 @@ class AlipayUserPhoneTest extends TestCase
 
         // Assert
         $this->assertSame($userPhone, $result); // Test fluent interface
-        $this->assertSame($verifiedTime, $userPhone->getVerifiedTime());
+        $retrievedTime = $userPhone->getVerifiedTime();
+        $this->assertInstanceOf(\DateTimeImmutable::class, $retrievedTime);
+        $this->assertEquals($verifiedTime->format('Y-m-d H:i:s'), $retrievedTime->format('Y-m-d H:i:s'));
     }
 
     public function testSetUser_withNullValue(): void

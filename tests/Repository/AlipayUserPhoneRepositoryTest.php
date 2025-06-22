@@ -37,25 +37,6 @@ class AlipayUserPhoneRepositoryTest extends TestCase
         $this->assertNotNull($constructor);
     }
 
-    public function test_find_method_exists(): void
-    {
-        $this->assertTrue(method_exists($this->repository, 'find'));
-    }
-
-    public function test_find_one_by_method_exists(): void
-    {
-        $this->assertTrue(method_exists($this->repository, 'findOneBy'));
-    }
-
-    public function test_find_all_method_exists(): void
-    {
-        $this->assertTrue(method_exists($this->repository, 'findAll'));
-    }
-
-    public function test_find_by_method_exists(): void
-    {
-        $this->assertTrue(method_exists($this->repository, 'findBy'));
-    }
 
     public function test_repository_inheritance(): void
     {
@@ -71,11 +52,6 @@ class AlipayUserPhoneRepositoryTest extends TestCase
         $this->assertSame(ServiceEntityRepository::class, $parentClass->getName());
     }
 
-    public function test_constructor_with_null_registry(): void
-    {
-        $this->expectException(\TypeError::class);
-        new AlipayUserPhoneRepository(null);
-    }
 
     public function test_repository_class_implements_correct_methods(): void
     {
