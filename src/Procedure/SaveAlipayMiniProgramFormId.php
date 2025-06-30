@@ -16,17 +16,17 @@ use Tourze\JsonRPC\Core\Attribute\MethodTag;
 use Tourze\JsonRPCLockBundle\Procedure\LockableProcedure;
 use Tourze\JsonRPCLogBundle\Attribute\Log;
 
-#[MethodTag('支付宝小程序')]
-#[MethodDoc('上报支付宝小程序表单ID')]
-#[MethodExpose('SaveAlipayMiniProgramFormId')]
+#[MethodTag(name: '支付宝小程序')]
+#[MethodDoc(summary: '上报支付宝小程序表单ID')]
+#[MethodExpose(method: 'SaveAlipayMiniProgramFormId')]
 #[Log]
-#[IsGranted('IS_AUTHENTICATED_FULLY')]
+#[IsGranted(attribute: 'IS_AUTHENTICATED_FULLY')]
 class SaveAlipayMiniProgramFormId extends LockableProcedure
 {
-    #[MethodParam('小程序ID')]
+    #[MethodParam(description: '小程序ID')]
     public string $miniProgramId;
 
-    #[MethodParam('表单ID')]
+    #[MethodParam(description: '表单ID')]
     public string $formId;
 
     public function __construct(

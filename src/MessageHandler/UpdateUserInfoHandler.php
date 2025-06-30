@@ -36,16 +36,34 @@ class UpdateUserInfoHandler
         );
 
         // 初始化alipay参数
+        $miniProgram = $user->getMiniProgram();
+        
+        // 检查必需的配置字段
+        $appId = $miniProgram->getAppId();
+        $privateKey = $miniProgram->getPrivateKey();
+        $alipayPublicKey = $miniProgram->getAlipayPublicKey();
+        
+        if ($appId === null || $privateKey === null || $alipayPublicKey === null) {
+            $this->logger->error('MiniProgram configuration is incomplete', [
+                'userId' => $user->getId(),
+                'miniProgramId' => $miniProgram->getId(),
+                'hasAppId' => $appId !== null,
+                'hasPrivateKey' => $privateKey !== null,
+                'hasAlipayPublicKey' => $alipayPublicKey !== null,
+            ]);
+            return;
+        }
+        
         $alipayConfig = new AlipayConfig();
-        $alipayConfig->setAppId($user->getMiniProgram()->getAppId());
-        $alipayConfig->setPrivateKey($user->getMiniProgram()->getPrivateKey());
+        $alipayConfig->setAppId($appId);
+        $alipayConfig->setPrivateKey($privateKey);
         // 密钥模式
-        $alipayConfig->setAlipayPublicKey($user->getMiniProgram()->getAlipayPublicKey());
+        $alipayConfig->setAlipayPublicKey($alipayPublicKey);
         // 证书模式
         // $alipayConfig->setAppCertPath('../appCertPublicKey.crt');
         // $alipayConfig->setAlipayPublicCertPath('../alipayCertPublicKey_RSA2.crt');
         // $alipayConfig->setRootCertPath('../alipayRootCert.crt');
-        $encryptKey = $user->getMiniProgram()->getEncryptKey();
+        $encryptKey = $miniProgram->getEncryptKey();
         if ($encryptKey !== null) {
             $alipayConfig->setEncryptKey($encryptKey);
         }

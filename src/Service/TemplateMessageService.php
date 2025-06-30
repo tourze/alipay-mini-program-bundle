@@ -6,6 +6,7 @@ use Alipay\OpenAPISDK\Api\AlipayOpenAppMiniTemplatemessageApi;
 use Alipay\OpenAPISDK\Model\AlipayOpenAppMiniTemplatemessageSendModel;
 use Alipay\OpenAPISDK\Util\Model\AlipayConfig;
 use AlipayMiniProgramBundle\Entity\TemplateMessage;
+use AlipayMiniProgramBundle\Exception\InvalidMiniProgramConfigurationException;
 use AlipayMiniProgramBundle\Repository\TemplateMessageRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -33,16 +34,27 @@ class TemplateMessageService
             );
 
             // 初始化alipay参数
+            $miniProgram = $message->getMiniProgram();
+            
+            // 检查必需的配置字段
+            $appId = $miniProgram->getAppId();
+            $privateKey = $miniProgram->getPrivateKey();
+            $alipayPublicKey = $miniProgram->getAlipayPublicKey();
+            
+            if ($appId === null || $privateKey === null || $alipayPublicKey === null) {
+                throw new InvalidMiniProgramConfigurationException('MiniProgram configuration is incomplete');
+            }
+            
             $alipayConfig = new AlipayConfig();
-            $alipayConfig->setAppId($message->getMiniProgram()->getAppId());
-            $alipayConfig->setPrivateKey($message->getMiniProgram()->getPrivateKey());
+            $alipayConfig->setAppId($appId);
+            $alipayConfig->setPrivateKey($privateKey);
             // 密钥模式
-            $alipayConfig->setAlipayPublicKey($message->getMiniProgram()->getAlipayPublicKey());
+            $alipayConfig->setAlipayPublicKey($alipayPublicKey);
             // 证书模式
             // $alipayConfig->setAppCertPath('../appCertPublicKey.crt');
             // $alipayConfig->setAlipayPublicCertPath('../alipayCertPublicKey_RSA2.crt');
             // $alipayConfig->setRootCertPath('../alipayRootCert.crt');
-            $encryptKey = $message->getMiniProgram()->getEncryptKey();
+            $encryptKey = $miniProgram->getEncryptKey();
             if ($encryptKey !== null) {
                 $alipayConfig->setEncryptKey($encryptKey);
             }
@@ -51,7 +63,7 @@ class TemplateMessageService
 
             $sendModel = new AlipayOpenAppMiniTemplatemessageSendModel();
             $sendModel->setToOpenId($message->getToOpenId());
-            $sendModel->setUserTemplateId($message->getToOpenId());
+            $sendModel->setUserTemplateId($message->getTemplateId());
             $sendModel->setPage($message->getPage());
             $sendModel->setData(json_encode($message->getData()));
 

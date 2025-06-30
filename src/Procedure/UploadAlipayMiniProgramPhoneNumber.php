@@ -21,17 +21,17 @@ use Tourze\JsonRPCLogBundle\Attribute\Log;
 /**
  * @see https://opendocs.alipay.com/mini/api/getphonenumber
  */
-#[MethodDoc('支付宝小程序上传手机号码')]
-#[MethodTag('支付宝小程序')]
-#[MethodExpose('UploadAlipayMiniProgramPhoneNumber')]
-#[IsGranted('IS_AUTHENTICATED_FULLY')]
+#[MethodDoc(summary: '支付宝小程序上传手机号码')]
+#[MethodTag(name: '支付宝小程序')]
+#[MethodExpose(method: 'UploadAlipayMiniProgramPhoneNumber')]
+#[IsGranted(attribute: 'IS_AUTHENTICATED_FULLY')]
 #[Log]
 class UploadAlipayMiniProgramPhoneNumber extends LockableProcedure
 {
     /**
      * 加密数据
      */
-    #[MethodParam('加密数据')]
+    #[MethodParam(description: '加密数据')]
     #[Assert\NotNull]
     public string $encryptedData;
 

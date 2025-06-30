@@ -52,13 +52,13 @@ class MiniProgramCrudController extends AbstractCrudController
             ->setHelp('支付宝小程序的应用ID');
 
         yield CodeEditorField::new('privateKey', '应用私钥')
-            ->setLanguage('text')
+            ->setLanguage('shell')
             ->onlyOnForms()
             ->setRequired(true)
             ->setHelp('RSA私钥，用于签名');
 
         yield CodeEditorField::new('alipayPublicKey', '支付宝公钥')
-            ->setLanguage('text')
+            ->setLanguage('shell')
             ->onlyOnForms()
             ->setRequired(true)
             ->setHelp('支付宝的RSA公钥，用于验签');

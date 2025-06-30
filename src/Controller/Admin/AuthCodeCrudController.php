@@ -47,7 +47,7 @@ class AuthCodeCrudController extends AbstractCrudController
 
         yield AssociationField::new('alipayUser', '支付宝用户')
             ->formatValue(function ($value) {
-                return $value ? sprintf('%s (%s)', $value->getNickName() ?: '未知', $value->getOpenId()) : '';
+                return $value ? sprintf('%s (%s)', $value->getNickName() ?? '未知', $value->getOpenId()) : '';
             });
 
         yield TextField::new('authCode', '授权码')

@@ -52,7 +52,7 @@ class FormIdCrudController extends AbstractCrudController
         yield AssociationField::new('user', '关联用户')
             ->setRequired(true)
             ->formatValue(function ($value) {
-                return $value ? sprintf('%s (%s)', $value->getNickName() ?: '未知', $value->getOpenId()) : '';
+                return $value ? sprintf('%s (%s)', $value->getNickName() ?? '未知', $value->getOpenId()) : '';
             });
 
         yield TextField::new('formId', '表单ID')

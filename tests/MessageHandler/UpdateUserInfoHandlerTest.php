@@ -63,19 +63,24 @@ class UpdateUserInfoHandlerTest extends TestCase
     {
         $miniProgram = new MiniProgram();
         $miniProgram->setAppId('test_app_id');
-        $miniProgram->setPrivateKey('test_private_key');
-        $miniProgram->setAlipayPublicKey('test_public_key');
+        $miniProgram->setPrivateKey('-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEAtest_fake_private_key_content
+-----END RSA PRIVATE KEY-----');
+        $miniProgram->setAlipayPublicKey('-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQtest_fake_public_key_content
+-----END PUBLIC KEY-----');
         $miniProgram->setEncryptKey('test_encrypt_key');
 
         $user = new User();
         $user->setMiniProgram($miniProgram);
 
-        $message = new UpdateUserInfoMessage($user->getId(), 'test_auth_token');
+        $userId = 123; // 使用固定的用户ID避免null问题
+        $message = new UpdateUserInfoMessage($userId, 'test_auth_token');
 
         $this->userRepository
             ->expects($this->once())
             ->method('find')
-            ->with($user->getId())
+            ->with($userId)
             ->willReturn($user);
 
         // 由于有外部API调用会抛出异常，我们不期望persist和flush被调用
@@ -174,19 +179,24 @@ class UpdateUserInfoHandlerTest extends TestCase
     {
         $miniProgram = new MiniProgram();
         $miniProgram->setAppId('test_app_id');
-        $miniProgram->setPrivateKey('test_private_key');
-        $miniProgram->setAlipayPublicKey('test_public_key');
+        $miniProgram->setPrivateKey('-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEAtest_fake_private_key_content
+-----END RSA PRIVATE KEY-----');
+        $miniProgram->setAlipayPublicKey('-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQtest_fake_public_key_content
+-----END PUBLIC KEY-----');
         $miniProgram->setEncryptKey('test_encrypt_key');
 
         $user = new User();
         $user->setMiniProgram($miniProgram);
 
-        $message = new UpdateUserInfoMessage($user->getId(), 'test_auth_token');
+        $userId = 456; // 使用固定的用户ID避免null问题
+        $message = new UpdateUserInfoMessage($userId, 'test_auth_token');
 
         $this->userRepository
             ->expects($this->once())
             ->method('find')
-            ->with($user->getId())
+            ->with($userId)
             ->willReturn($user);
 
         $this->logger

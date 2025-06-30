@@ -52,7 +52,7 @@ class TemplateMessageCrudController extends AbstractCrudController
         yield AssociationField::new('toUser', '接收用户')
             ->setRequired(true)
             ->formatValue(function ($value) {
-                return $value ? sprintf('%s (%s)', $value->getNickName() ?: '未知', $value->getOpenId()) : '';
+                return $value ? sprintf('%s (%s)', $value->getNickName() ?? '未知', $value->getOpenId()) : '';
             });
 
         yield TextField::new('templateId', '模板ID')
@@ -67,7 +67,7 @@ class TemplateMessageCrudController extends AbstractCrudController
             ->setHelp('点击模板消息后跳转的页面路径');
 
         yield CodeEditorField::new('data', '模板数据')
-            ->setLanguage('json')
+            ->setLanguage('javascript')
             ->setRequired(true)
             ->setHelp('模板消息的数据内容，JSON格式')
             ->onlyOnForms();

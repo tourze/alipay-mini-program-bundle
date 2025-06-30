@@ -34,29 +34,29 @@ use Tourze\JsonRPCLogBundle\Attribute\Log;
 /**
  * @see https://opendocs.alipay.com/open/02xtl8?pathHash=e39a95b3
  */
-#[MethodDoc('支付宝小程序上传授权码')]
-#[MethodTag('支付宝小程序')]
-#[MethodExpose('UploadAlipayMiniProgramAuthCode')]
+#[MethodDoc(summary: '支付宝小程序上传授权码')]
+#[MethodTag(name: '支付宝小程序')]
+#[MethodExpose(method: 'UploadAlipayMiniProgramAuthCode')]
 #[Log]
 class UploadAlipayMiniProgramAuthCode extends LockableProcedure
 {
     /**
      * 小程序的 AppID
      */
-    #[MethodParam('小程序的 AppID')]
+    #[MethodParam(description: '小程序的 AppID')]
     public string $appId = '';
 
     /**
      * 授权范围
      */
-    #[MethodParam('授权范围，auth_base 或 auth_user')]
+    #[MethodParam(description: '授权范围，auth_base 或 auth_user')]
     #[Assert\NotNull]
     public string $scope;
 
     /**
      * 授权码
      */
-    #[MethodParam('授权码')]
+    #[MethodParam(description: '授权码')]
     #[Assert\NotNull]
     public string $authCode;
 

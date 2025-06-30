@@ -200,7 +200,8 @@ class User implements \Stringable
 
     public function getLatestAuthCode(): ?AuthCode
     {
-        return $this->authCodes->last() ?: null;
+        $lastAuthCode = $this->authCodes->last();
+        return $lastAuthCode !== false ? $lastAuthCode : null;
     }
 
     /**

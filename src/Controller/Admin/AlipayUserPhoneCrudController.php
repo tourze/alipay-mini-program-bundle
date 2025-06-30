@@ -44,7 +44,7 @@ class AlipayUserPhoneCrudController extends AbstractCrudController
         yield AssociationField::new('user', '支付宝用户')
             ->setRequired(true)
             ->formatValue(function ($value) {
-                return $value ? sprintf('%s (%s)', $value->getNickName() ?: '未知', $value->getOpenId()) : '';
+                return $value ? sprintf('%s (%s)', $value->getNickName() ?? '未知', $value->getOpenId()) : '';
             });
 
         yield AssociationField::new('phone', '手机号码')
