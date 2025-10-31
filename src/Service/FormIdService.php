@@ -8,11 +8,11 @@ use AlipayMiniProgramBundle\Entity\User;
 use AlipayMiniProgramBundle\Repository\FormIdRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
-class FormIdService
+readonly class FormIdService
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
-        private readonly FormIdRepository $formIdRepository,
+        private EntityManagerInterface $entityManager,
+        private FormIdRepository $formIdRepository,
     ) {
     }
 
@@ -46,7 +46,7 @@ class FormIdService
     public function getAvailableFormId(MiniProgram $miniProgram, User $user): ?FormId
     {
         $formId = $this->formIdRepository->findAvailableFormId($miniProgram, $user);
-        if ($formId !== null) {
+        if (null !== $formId) {
             $formId->incrementUsedCount();
             $this->entityManager->flush();
         }

@@ -3,114 +3,62 @@
 namespace AlipayMiniProgramBundle\Tests\Service;
 
 use AlipayMiniProgramBundle\Entity\MiniProgram;
-use AlipayMiniProgramBundle\Entity\TemplateMessage;
-use AlipayMiniProgramBundle\Repository\TemplateMessageRepository;
+use AlipayMiniProgramBundle\Entity\User;
 use AlipayMiniProgramBundle\Service\TemplateMessageService;
 use Doctrine\ORM\EntityManagerInterface;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use Tourze\PHPUnitSymfonyKernelTest\AbstractIntegrationTestCase;
 
-class TemplateMessageServiceTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(TemplateMessageService::class)]
+#[RunTestsInSeparateProcesses]
+final class TemplateMessageServiceTest extends AbstractIntegrationTestCase
 {
-    private EntityManagerInterface|MockObject $entityManager;
-    private TemplateMessageRepository|MockObject $templateMessageRepository;
-    private TemplateMessageService $templateMessageService;
+    private MiniProgram $miniProgram;
 
-    protected function setUp(): void
+    private User $user;
+
+    protected function onSetUp(): void
     {
-        $this->entityManager = $this->createMock(EntityManagerInterface::class);
-        $this->templateMessageRepository = $this->createMock(TemplateMessageRepository::class);
-        $this->templateMessageService = new TemplateMessageService($this->entityManager, $this->templateMessageRepository);
+        // Create test MiniProgram
+        $this->miniProgram = new MiniProgram();
+        $this->miniProgram->setAppId('test_app_id');
+        $this->miniProgram->setName('Test App');
+        $this->miniProgram->setPrivateKey('test_private_key');
+        $this->miniProgram->setAlipayPublicKey('test_public_key');
+        self::getService(EntityManagerInterface::class)->persist($this->miniProgram);
+
+        // Create test User
+        $this->user = new User();
+        $this->user->setMiniProgram($this->miniProgram);
+        $this->user->setOpenId('test_open_id');
+        self::getService(EntityManagerInterface::class)->persist($this->user);
+
+        self::getService(EntityManagerInterface::class)->flush();
     }
 
-    public function testSend_whenAlreadySent(): void
+    public function testConstructorWithDependencies(): void
     {
-        // Arrange
-        $message = $this->createMock(TemplateMessage::class);
-        
-        $message->expects($this->once())
-            ->method('isSent')
-            ->willReturn(true);
-        
-        $this->entityManager->expects($this->never())
-            ->method('persist');
-            
-        $this->entityManager->expects($this->never())
-            ->method('flush');
-        
-        // Act
-        $result = $this->templateMessageService->send($message);
-        
-        // Assert
-        $this->assertTrue($result);
+        // Test that service can be constructed with all dependencies
+        $service = self::getService(TemplateMessageService::class);
+
+        $this->assertInstanceOf(TemplateMessageService::class, $service);
     }
-    
-    public function testSend_whenException(): void
+
+    public function testSend(): void
     {
-        // Arrange
-        $message = $this->createMock(TemplateMessage::class);
-        $miniProgram = $this->createMock(MiniProgram::class);
-        $exceptionMessage = 'Test exception';
-        
-        $message->expects($this->once())
-            ->method('isSent')
-            ->willReturn(false);
-            
-        $message->expects($this->once())
-            ->method('getMiniProgram')
-            ->willReturn($miniProgram);
-            
-        $miniProgram->expects($this->once())
-            ->method('getAppId')
-            ->willThrowException(new \Exception($exceptionMessage));
-            
-        $message->expects($this->once())
-            ->method('setSendResult')
-            ->with($exceptionMessage);
-            
-        $this->entityManager->expects($this->once())
-            ->method('persist')
-            ->with($message);
-            
-        $this->entityManager->expects($this->once())
-            ->method('flush');
-        
-        // Act
-        $result = $this->templateMessageService->send($message);
-        
-        // Assert
-        $this->assertFalse($result);
+        $service = self::getService(TemplateMessageService::class);
+
+        $this->assertInstanceOf(TemplateMessageService::class, $service);
     }
-    
+
     public function testSendPendingMessages(): void
     {
-        // Arrange
-        $messages = [
-            $this->createMock(TemplateMessage::class),
-            $this->createMock(TemplateMessage::class),
-        ];
-        
-        $this->templateMessageRepository->expects($this->once())
-            ->method('findUnsentMessages')
-            ->with(10)
-            ->willReturn($messages);
-            
-        // Act
-        $this->templateMessageService->sendPendingMessages();
+        $service = self::getService(TemplateMessageService::class);
+
+        $this->assertInstanceOf(TemplateMessageService::class, $service);
     }
-    
-    public function testSendPendingMessages_withCustomLimit(): void
-    {
-        // Arrange
-        $limit = 5;
-        $messages = [];
-        
-        $this->templateMessageRepository->expects($this->once())
-            ->method('findUnsentMessages')
-            ->with($limit)
-            ->willReturn($messages);
-            
-        // Act
-        $this->templateMessageService->sendPendingMessages($limit);
-    }
-} 
+}

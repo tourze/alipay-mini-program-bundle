@@ -5,19 +5,14 @@ namespace AlipayMiniProgramBundle\Repository;
 use AlipayMiniProgramBundle\Entity\AuthCode;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-
+use Tourze\PHPUnitSymfonyKernelTest\Attribute\AsRepository;
 
 /**
  * @extends ServiceEntityRepository<AuthCode>
- *
- * @method AuthCode|null find($id, $lockMode = null, $lockVersion = null)
- * @method AuthCode|null findOneBy(array $criteria, array $orderBy = null)
- * @method AuthCode[]    findAll()
- * @method AuthCode[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
+#[AsRepository(entityClass: AuthCode::class)]
 class AuthCodeRepository extends ServiceEntityRepository
 {
-
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, AuthCode::class);
@@ -26,5 +21,23 @@ class AuthCodeRepository extends ServiceEntityRepository
     public function findByAuthCode(string $authCode): ?AuthCode
     {
         return $this->findOneBy(['authCode' => $authCode]);
+    }
+
+    public function save(AuthCode $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function remove(AuthCode $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->remove($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
     }
 }

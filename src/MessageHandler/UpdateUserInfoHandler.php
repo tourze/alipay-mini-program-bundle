@@ -3,6 +3,7 @@
 namespace AlipayMiniProgramBundle\MessageHandler;
 
 use Alipay\OpenAPISDK\Api\AlipayUserInfoApi;
+use Alipay\OpenAPISDK\Model\AlipayUserInfoShareResponseModel;
 use Alipay\OpenAPISDK\Util\AlipayConfigUtil;
 use Alipay\OpenAPISDK\Util\Model\AlipayConfig;
 use AlipayMiniProgramBundle\Enum\AlipayUserGender;
@@ -10,50 +11,55 @@ use AlipayMiniProgramBundle\Message\UpdateUserInfoMessage;
 use AlipayMiniProgramBundle\Repository\UserRepository;
 use Carbon\CarbonImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use GuzzleHttp\Client;
+use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
-class UpdateUserInfoHandler
+#[WithMonologChannel(channel: 'alipay_mini_program')]
+readonly class UpdateUserInfoHandler
 {
     public function __construct(
-        private readonly UserRepository $userRepository,
-        private readonly LoggerInterface $logger,
-        private readonly EntityManagerInterface $entityManager,
-    ) {}
+        private UserRepository $userRepository,
+        private LoggerInterface $logger,
+        private EntityManagerInterface $entityManager,
+    ) {
+    }
 
     public function __invoke(UpdateUserInfoMessage $message): void
     {
         $user = $this->userRepository->find($message->getUserId());
-        if ($user === null) {
+        if (null === $user) {
             return;
         }
 
         $apiInstance = new AlipayUserInfoApi(
             // If you want use custom http client, pass your client which implements `GuzzleHttp\ClientInterface`.
             // This is optional, `GuzzleHttp\Client` will be used as default.
-            new \GuzzleHttp\Client()
+            new Client()
         );
 
         // 初始化alipay参数
         $miniProgram = $user->getMiniProgram();
-        
+
         // 检查必需的配置字段
         $appId = $miniProgram->getAppId();
         $privateKey = $miniProgram->getPrivateKey();
         $alipayPublicKey = $miniProgram->getAlipayPublicKey();
-        
-        if ($appId === null || $privateKey === null || $alipayPublicKey === null) {
+
+        if (null === $appId || null === $privateKey || null === $alipayPublicKey) {
             $this->logger->error('MiniProgram configuration is incomplete', [
                 'userId' => $user->getId(),
                 'miniProgramId' => $miniProgram->getId(),
-                'hasAppId' => $appId !== null,
-                'hasPrivateKey' => $privateKey !== null,
-                'hasAlipayPublicKey' => $alipayPublicKey !== null,
+                'hasAppId' => null !== $appId,
+                'hasPrivateKey' => null !== $privateKey,
+                'hasAlipayPublicKey' => null !== $alipayPublicKey,
             ]);
+
             return;
         }
-        
+
         $alipayConfig = new AlipayConfig();
         $alipayConfig->setAppId($appId);
         $alipayConfig->setPrivateKey($privateKey);
@@ -64,7 +70,7 @@ class UpdateUserInfoHandler
         // $alipayConfig->setAlipayPublicCertPath('../alipayCertPublicKey_RSA2.crt');
         // $alipayConfig->setRootCertPath('../alipayRootCert.crt');
         $encryptKey = $miniProgram->getEncryptKey();
-        if ($encryptKey !== null) {
+        if (is_string($encryptKey)) {
             $alipayConfig->setEncryptKey($encryptKey);
         }
         $alipayConfigUtil = new AlipayConfigUtil($alipayConfig);
@@ -78,6 +84,17 @@ class UpdateUserInfoHandler
                 'authToken' => $message->getAuthToken(),
                 'userId' => $user->getId(),
             ]);
+
+            return;
+        }
+
+        // 检查响应类型并更新用户信息
+        if (!$userInfoResponse instanceof AlipayUserInfoShareResponseModel) {
+            $this->logger->error('Invalid user info response type', [
+                'response_type' => get_class($userInfoResponse),
+                'userId' => $user->getId(),
+            ]);
+
             return;
         }
 
@@ -87,7 +104,7 @@ class UpdateUserInfoHandler
         $user->setProvince($userInfoResponse->getProvince());
         $user->setCity($userInfoResponse->getCity());
         $gender = $userInfoResponse->getGender();
-        if ($gender !== null) {
+        if (null !== $gender) {
             $user->setGender(AlipayUserGender::from($gender));
         }
         $user->setLastInfoUpdateTime(CarbonImmutable::now()->toDateTimeImmutable());

@@ -2,6 +2,8 @@
 
 namespace AlipayMiniProgramBundle\Response;
 
+use AlipayMiniProgramBundle\Utils\ResponseSanitizer;
+
 class AlipaySystemOauthTokenResponse
 {
     private bool $success;
@@ -30,18 +32,22 @@ class AlipaySystemOauthTokenResponse
 
     public function __construct(\stdClass $response)
     {
-        $this->success = empty($response->code) || '10000' === $response->code;
-        $this->code = $response->code ?? null;
-        $this->msg = $response->msg ?? null;
-        $this->subCode = $response->sub_code ?? null;
-        $this->subMsg = $response->sub_msg ?? null;
-        $this->userId = $response->user_id ?? null;
-        $this->openId = $response->open_id ?? null;
-        $this->accessToken = $response->access_token ?? null;
-        $this->refreshToken = $response->refresh_token ?? null;
-        $this->expiresIn = $response->expires_in ? (int) $response->expires_in : null;
-        $this->reExpiresIn = $response->re_expires_in ? (int) $response->re_expires_in : null;
-        $this->authStart = $response->auth_start ?? null;
+        $code = ResponseSanitizer::expectNullableString($response, 'code');
+        $this->success = null === $code || '10000' === $code;
+        $this->code = $code;
+        $this->msg = ResponseSanitizer::expectNullableString($response, 'msg');
+        $this->subCode = ResponseSanitizer::expectNullableString($response, 'sub_code');
+        $this->subMsg = ResponseSanitizer::expectNullableString($response, 'sub_msg');
+        $this->userId = ResponseSanitizer::expectNullableString($response, 'user_id');
+        $this->openId = ResponseSanitizer::expectNullableString($response, 'open_id');
+        $this->accessToken = ResponseSanitizer::expectNullableString($response, 'access_token');
+        $this->refreshToken = ResponseSanitizer::expectNullableString($response, 'refresh_token');
+        $expiresInValue = ResponseSanitizer::expectNullableInt($response, 'expires_in');
+        // 0表示立即过期，等同于无有效期，返回null；负值保留（可能有特殊业务含义）
+        $this->expiresIn = (null !== $expiresInValue && 0 !== $expiresInValue) ? $expiresInValue : null;
+        $reExpiresInValue = ResponseSanitizer::expectNullableInt($response, 're_expires_in');
+        $this->reExpiresIn = (null !== $reExpiresInValue && 0 !== $reExpiresInValue) ? $reExpiresInValue : null;
+        $this->authStart = ResponseSanitizer::expectNullableString($response, 'auth_start');
     }
 
     public function isSuccess(): bool

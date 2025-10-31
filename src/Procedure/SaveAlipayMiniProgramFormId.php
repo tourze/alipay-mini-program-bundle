@@ -37,16 +37,29 @@ class SaveAlipayMiniProgramFormId extends LockableProcedure
     ) {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function execute(): array
     {
         $miniProgram = $this->entityManager->find(MiniProgram::class, $this->miniProgramId);
-        if ($miniProgram === null) {
+        if (null === $miniProgram) {
             throw new NotFoundHttpException('小程序不存在');
+        }
+
+        $bizUser = $this->security->getUser();
+        if (null === $bizUser) {
+            throw new NotFoundHttpException('用户未登录');
+        }
+
+        $alipayUser = $this->userService->getAlipayUser($bizUser);
+        if (null === $alipayUser) {
+            throw new NotFoundHttpException('未找到对应的支付宝用户');
         }
 
         $formId = $this->formIdService->saveFormId(
             $miniProgram,
-            $this->userService->getAlipayUser($this->security->getUser()),
+            $alipayUser,
             $this->formId,
         );
 

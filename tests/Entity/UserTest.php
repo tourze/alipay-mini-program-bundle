@@ -9,54 +9,48 @@ use AlipayMiniProgramBundle\Entity\Phone;
 use AlipayMiniProgramBundle\Entity\User;
 use AlipayMiniProgramBundle\Enum\AlipayUserGender;
 use Doctrine\Common\Collections\ArrayCollection;
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use Tourze\PHPUnitDoctrineEntity\AbstractEntityTestCase;
 
-class UserTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(User::class)]
+final class UserTest extends AbstractEntityTestCase
 {
-    public function testGettersAndSetters(): void
+    protected function createEntity(): object
     {
-        // Arrange
-        $user = new User();
+        // User has required relations, so we need to create a minimal valid entity
         $miniProgram = new MiniProgram();
-        $lastInfoUpdateTime = new \DateTimeImmutable();
-        $createTime = new \DateTimeImmutable();
-        $updateTime = new \DateTimeImmutable();
+        $miniProgram->setName('Test MiniProgram');
+        $miniProgram->setAppId('test_app_id');
+        $miniProgram->setPrivateKey('test_key');
+        $miniProgram->setAlipayPublicKey('test_public_key');
 
-        // Act & Assert
-        $this->assertEquals(0, $user->getId());
-
+        $user = new User();
         $user->setMiniProgram($miniProgram);
-        $this->assertSame($miniProgram, $user->getMiniProgram());
-
         $user->setOpenId('test_open_id_123');
-        $this->assertEquals('test_open_id_123', $user->getOpenId());
 
-        $user->setNickName('测试用户');
-        $this->assertEquals('测试用户', $user->getNickName());
-
-        $user->setAvatar('https://example.com/avatar.jpg');
-        $this->assertEquals('https://example.com/avatar.jpg', $user->getAvatar());
-
-        $user->setProvince('广东省');
-        $this->assertEquals('广东省', $user->getProvince());
-
-        $user->setCity('深圳市');
-        $this->assertEquals('深圳市', $user->getCity());
-
-        $user->setGender(AlipayUserGender::MALE);
-        $this->assertEquals(AlipayUserGender::MALE, $user->getGender());
-
-        $user->setLastInfoUpdateTime($lastInfoUpdateTime);
-        $this->assertSame($lastInfoUpdateTime, $user->getLastInfoUpdateTime());
-
-        $user->setCreateTime($createTime);
-        $this->assertSame($createTime, $user->getCreateTime());
-
-        $user->setUpdateTime($updateTime);
-        $this->assertSame($updateTime, $user->getUpdateTime());
+        return $user;
     }
 
-    public function testConstructor_initializesCollections(): void
+    /**
+     * @return iterable<string, array{string, mixed}>
+     */
+    public static function propertiesProvider(): iterable
+    {
+        return [
+            'openId' => ['openId', 'test_open_id_123'],
+            'nickName' => ['nickName', '测试用户'],
+            'avatar' => ['avatar', 'https://example.com/avatar.jpg'],
+            'province' => ['province', '广东省'],
+            'city' => ['city', '深圳市'],
+            'gender' => ['gender', AlipayUserGender::MALE],
+            'lastInfoUpdateTime' => ['lastInfoUpdateTime', new \DateTimeImmutable()],
+        ];
+    }
+
+    public function testConstructorInitializesCollections(): void
     {
         // Arrange & Act
         $user = new User();
@@ -75,15 +69,15 @@ class UserTest extends TestCase
         $authCode = new AuthCode();
 
         // Act
-        $result = $user->addAuthCode($authCode);
+        $user->addAuthCode($authCode);
 
         // Assert
-        $this->assertSame($user, $result); // Test fluent interface
+
         $this->assertTrue($user->getAuthCodes()->contains($authCode));
         $this->assertSame($user, $authCode->getAlipayUser());
     }
 
-    public function testAddAuthCode_preventsDuplicates(): void
+    public function testAddAuthCodePreventsDuplicates(): void
     {
         // Arrange
         $user = new User();
@@ -106,15 +100,15 @@ class UserTest extends TestCase
         $user->addAuthCode($authCode);
 
         // Act
-        $result = $user->removeAuthCode($authCode);
+        $user->removeAuthCode($authCode);
 
         // Assert
-        $this->assertSame($user, $result); // Test fluent interface
+
         $this->assertFalse($user->getAuthCodes()->contains($authCode));
         $this->assertNull($authCode->getAlipayUser());
     }
 
-    public function testGetLatestAuthCode_whenExists(): void
+    public function testGetLatestAuthCodeWhenExists(): void
     {
         // Arrange
         $user = new User();
@@ -130,7 +124,7 @@ class UserTest extends TestCase
         $this->assertSame($authCode2, $result); // Should return the last added
     }
 
-    public function testGetLatestAuthCode_whenEmpty(): void
+    public function testGetLatestAuthCodeWhenEmpty(): void
     {
         // Arrange
         $user = new User();
@@ -149,10 +143,10 @@ class UserTest extends TestCase
         $userPhone = new AlipayUserPhone();
 
         // Act
-        $result = $user->addUserPhone($userPhone);
+        $user->addUserPhone($userPhone);
 
         // Assert
-        $this->assertSame($user, $result); // Test fluent interface
+
         $this->assertTrue($user->getUserPhones()->contains($userPhone));
         $this->assertSame($user, $userPhone->getUser());
     }
@@ -165,15 +159,15 @@ class UserTest extends TestCase
         $user->addUserPhone($userPhone);
 
         // Act
-        $result = $user->removeUserPhone($userPhone);
+        $user->removeUserPhone($userPhone);
 
         // Assert
-        $this->assertSame($user, $result); // Test fluent interface
+
         $this->assertFalse($user->getUserPhones()->contains($userPhone));
         $this->assertNull($userPhone->getUser());
     }
 
-    public function testGetLatestPhone_whenExists(): void
+    public function testGetLatestPhoneWhenExists(): void
     {
         // Arrange
         $user = new User();
@@ -197,7 +191,7 @@ class UserTest extends TestCase
         $this->assertSame($phone2, $result); // Should return the last added phone
     }
 
-    public function testGetLatestPhone_whenEmpty(): void
+    public function testGetLatestPhoneWhenEmpty(): void
     {
         // Arrange
         $user = new User();
@@ -209,7 +203,7 @@ class UserTest extends TestCase
         $this->assertNull($result);
     }
 
-    public function testSetGender_withAllValues(): void
+    public function testSetGenderWithAllValues(): void
     {
         // Arrange
         $user = new User();
@@ -254,22 +248,5 @@ class UserTest extends TestCase
         $this->assertNull($user->getCity());
         $this->assertNull($user->getGender());
         $this->assertNull($user->getLastInfoUpdateTime());
-    }
-
-    public function testFluentInterface(): void
-    {
-        // Arrange
-        $user = new User();
-        $miniProgram = new MiniProgram();
-
-        // Act & Assert - Test that all setters return the entity instance
-        $this->assertSame($user, $user->setMiniProgram($miniProgram));
-        $this->assertSame($user, $user->setOpenId('test'));
-        $this->assertSame($user, $user->setNickName('test'));
-        $this->assertSame($user, $user->setAvatar('test'));
-        $this->assertSame($user, $user->setProvince('test'));
-        $this->assertSame($user, $user->setCity('test'));
-        $this->assertSame($user, $user->setGender(AlipayUserGender::MALE));
-        $this->assertSame($user, $user->setLastInfoUpdateTime(new \DateTimeImmutable()));
     }
 }

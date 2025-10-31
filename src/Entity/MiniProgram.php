@@ -6,6 +6,7 @@ use AlipayMiniProgramBundle\Repository\MiniProgramRepository;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 use Tourze\DoctrineRandomBundle\Attribute\RandomStringColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 
@@ -14,13 +15,16 @@ use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 #[AsEntityListener]
 class MiniProgram implements \Stringable
 {
+    use TimestampableAware;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
-    private ?int $id = 0;
+    private int $id = 0;
 
     #[RandomStringColumn(length: 10)]
     #[ORM\Column(type: Types::STRING, length: 100, unique: true, nullable: true, options: ['comment' => '编码'])]
+    #[Assert\Length(max: 100)]
     private ?string $code = null;
 
     public function getCode(): ?string
@@ -28,44 +32,59 @@ class MiniProgram implements \Stringable
         return $this->code;
     }
 
-    public function setCode(string $code): self
+    public function setCode(string $code): void
     {
         $this->code = $code;
-
-        return $this;
     }
 
     #[ORM\Column(length: 64, options: ['comment' => '小程序名称'])]
+    #[Assert\NotNull]
+    #[Assert\Length(max: 64)]
     private ?string $name = null;
 
     #[ORM\Column(length: 64, options: ['comment' => '小程序 AppID'])]
+    #[Assert\NotNull]
+    #[Assert\Length(max: 64)]
     private ?string $appId = null;
 
     #[ORM\Column(type: Types::TEXT, options: ['comment' => '应用私钥'])]
+    #[Assert\NotNull]
+    #[Assert\Length(max: 2048)]
     private ?string $privateKey = null;
 
     #[ORM\Column(type: Types::TEXT, options: ['comment' => '支付宝公钥'])]
+    #[Assert\NotNull]
+    #[Assert\Length(max: 2048)]
     private ?string $alipayPublicKey = null;
 
     #[ORM\Column(length: 64, nullable: true, options: ['comment' => 'AES密钥'])]
+    #[Assert\Length(max: 64)]
     private ?string $encryptKey = null;
 
     #[ORM\Column(options: ['comment' => '是否为沙箱环境'])]
+    #[Assert\Type(type: 'bool')]
     private bool $sandbox = false;
 
     #[ORM\Column(length: 8, options: ['comment' => '签名类型，RSA2或RSA'])]
+    #[Assert\NotNull]
+    #[Assert\Length(max: 8)]
+    #[Assert\Choice(choices: ['RSA', 'RSA2'])]
     private string $signType = 'RSA2';
 
     #[ORM\Column(length: 128, options: ['comment' => '支付宝网关地址'])]
+    #[Assert\NotNull]
+    #[Assert\Length(max: 128)]
+    #[Assert\Url]
     private string $gatewayUrl = 'https://openapi.alipay.com/gateway.do';
 
     #[ORM\Column(length: 255, nullable: true, options: ['comment' => '授权回调地址'])]
+    #[Assert\Length(max: 255)]
+    #[Assert\Url]
     private ?string $authRedirectUrl = null;
 
     #[ORM\Column(length: 255, nullable: true, options: ['comment' => '备注说明'])]
+    #[Assert\Length(max: 255)]
     private ?string $remark = null;
-
-    use TimestampableAware;
 
     public function getId(): ?int
     {
@@ -77,11 +96,9 @@ class MiniProgram implements \Stringable
         return $this->name;
     }
 
-    public function setName(string $name): static
+    public function setName(string $name): void
     {
         $this->name = $name;
-
-        return $this;
     }
 
     public function getAppId(): ?string
@@ -89,11 +106,9 @@ class MiniProgram implements \Stringable
         return $this->appId;
     }
 
-    public function setAppId(string $appId): static
+    public function setAppId(string $appId): void
     {
         $this->appId = $appId;
-
-        return $this;
     }
 
     public function getPrivateKey(): ?string
@@ -101,11 +116,9 @@ class MiniProgram implements \Stringable
         return $this->privateKey;
     }
 
-    public function setPrivateKey(string $privateKey): static
+    public function setPrivateKey(string $privateKey): void
     {
         $this->privateKey = $privateKey;
-
-        return $this;
     }
 
     public function getAlipayPublicKey(): ?string
@@ -113,11 +126,9 @@ class MiniProgram implements \Stringable
         return $this->alipayPublicKey;
     }
 
-    public function setAlipayPublicKey(string $alipayPublicKey): static
+    public function setAlipayPublicKey(string $alipayPublicKey): void
     {
         $this->alipayPublicKey = $alipayPublicKey;
-
-        return $this;
     }
 
     public function getEncryptKey(): ?string
@@ -125,11 +136,9 @@ class MiniProgram implements \Stringable
         return $this->encryptKey;
     }
 
-    public function setEncryptKey(?string $encryptKey): static
+    public function setEncryptKey(?string $encryptKey): void
     {
         $this->encryptKey = $encryptKey;
-
-        return $this;
     }
 
     public function isSandbox(): bool
@@ -137,11 +146,9 @@ class MiniProgram implements \Stringable
         return $this->sandbox;
     }
 
-    public function setSandbox(bool $sandbox): static
+    public function setSandbox(bool $sandbox): void
     {
         $this->sandbox = $sandbox;
-
-        return $this;
     }
 
     public function getSignType(): string
@@ -149,11 +156,9 @@ class MiniProgram implements \Stringable
         return $this->signType;
     }
 
-    public function setSignType(string $signType): static
+    public function setSignType(string $signType): void
     {
         $this->signType = $signType;
-
-        return $this;
     }
 
     public function getGatewayUrl(): string
@@ -161,11 +166,9 @@ class MiniProgram implements \Stringable
         return $this->sandbox ? 'https://openapi.alipaydev.com/gateway.do' : $this->gatewayUrl;
     }
 
-    public function setGatewayUrl(string $gatewayUrl): static
+    public function setGatewayUrl(string $gatewayUrl): void
     {
         $this->gatewayUrl = $gatewayUrl;
-
-        return $this;
     }
 
     public function getAuthRedirectUrl(): ?string
@@ -173,11 +176,9 @@ class MiniProgram implements \Stringable
         return $this->authRedirectUrl;
     }
 
-    public function setAuthRedirectUrl(?string $authRedirectUrl): static
+    public function setAuthRedirectUrl(?string $authRedirectUrl): void
     {
         $this->authRedirectUrl = $authRedirectUrl;
-
-        return $this;
     }
 
     public function getRemark(): ?string
@@ -185,11 +186,9 @@ class MiniProgram implements \Stringable
         return $this->remark;
     }
 
-    public function setRemark(?string $remark): static
+    public function setRemark(?string $remark): void
     {
         $this->remark = $remark;
-
-        return $this;
     }
 
     public function __toString(): string

@@ -6,20 +6,20 @@ use AlipayMiniProgramBundle\Entity\AlipayUserPhone;
 use AlipayMiniProgramBundle\Entity\Phone;
 use AlipayMiniProgramBundle\Entity\User;
 use AlipayMiniProgramBundle\Enum\AlipayUserGender;
+use AlipayMiniProgramBundle\Exception\UserNotFoundException;
 use AlipayMiniProgramBundle\Repository\PhoneRepository;
 use AlipayMiniProgramBundle\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Security\User\UserLoaderInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
-use Tourze\JsonRPC\Core\Exception\ApiException;
 
-class UserService
+readonly class UserService
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
-        private readonly PhoneRepository $phoneRepository,
-        private readonly UserLoaderInterface $userLoader,
-        private readonly UserRepository $alipayUserRepository,
+        private EntityManagerInterface $entityManager,
+        private PhoneRepository $phoneRepository,
+        private UserLoaderInterface $userLoader,
+        private UserRepository $alipayUserRepository,
     ) {
     }
 
@@ -64,7 +64,7 @@ class UserService
     {
         // 查找或创建手机号码记录
         $phone = $this->phoneRepository->findByNumber($phoneNumber);
-        if ($phone === null) {
+        if (null === $phone) {
             $phone = new Phone();
             $phone->setNumber($phoneNumber);
             $this->entityManager->persist($phone);
@@ -75,6 +75,10 @@ class UserService
         $userPhone->setUser($user);
         $userPhone->setPhone($phone);
         $userPhone->setVerifiedTime(new \DateTimeImmutable());
+
+        // 建立双向关联
+        $user->addUserPhone($userPhone);
+        $phone->addUserPhone($userPhone);
 
         $this->entityManager->persist($userPhone);
         $this->entityManager->flush();
@@ -87,7 +91,7 @@ class UserService
     {
         $phone = $user->getLatestPhone();
 
-        return $phone?->getNumber();
+        return $phone instanceof Phone ? $phone->getNumber() : null;
     }
 
     /**
@@ -98,8 +102,19 @@ class UserService
     public function getAllPhones(User $user): array
     {
         return $user->getUserPhones()
-            ->map(fn (AlipayUserPhone $userPhone) => $userPhone->getPhone()->getNumber())
-            ->toArray();
+            ->map(function (AlipayUserPhone $userPhone): string {
+                $phone = $userPhone->getPhone();
+                if (null === $phone) {
+                    return '';
+                }
+
+                $number = $phone->getNumber();
+
+                return is_string($number) ? $number : '';
+            })
+            ->filter(fn (string $number) => '' !== $number)
+            ->toArray()
+        ;
     }
 
     /**
@@ -122,12 +137,12 @@ class UserService
         //        }
 
         $bizUser = $this->userLoader->loadUserByIdentifier($user->getOpenId());
-        if ($bizUser !== null) {
+        if (null !== $bizUser) {
             return $bizUser;
         }
 
         // 如果没有找到，抛出异常，不应该在这里直接创建BizUser
-        throw new ApiException('未找到对应的业务用户，请先创建用户');
+        throw new UserNotFoundException('未找到对应的业务用户，请先创建用户');
     }
 
     /**
@@ -138,7 +153,7 @@ class UserService
         // 1. 先通过 username 查找（username 是 openId）
         $username = $bizUser->getUserIdentifier();
         $alipayUser = $this->alipayUserRepository->findOneBy(['openId' => $username]);
-        if ($alipayUser !== null) {
+        if (null !== $alipayUser) {
             return $alipayUser;
         }
 
@@ -158,13 +173,13 @@ class UserService
     /**
      * 通过业务用户查找支付宝用户，如果找不到则抛出异常
      *
-     * @throws ApiException 如果找不到支付宝用户
+     * @throws UserNotFoundException 如果找不到支付宝用户
      */
     public function requireAlipayUser(UserInterface $bizUser): User
     {
         $alipayUser = $this->getAlipayUser($bizUser);
-        if ($alipayUser === null) {
-            throw new ApiException('未找到对应的支付宝用户');
+        if (null === $alipayUser) {
+            throw new UserNotFoundException('未找到对应的支付宝用户');
         }
 
         return $alipayUser;

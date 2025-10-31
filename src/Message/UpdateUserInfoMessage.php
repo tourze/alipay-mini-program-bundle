@@ -7,8 +7,7 @@ class UpdateUserInfoMessage
     public function __construct(
         private readonly int $userId,
         private readonly string $authToken,
-    )
-    {
+    ) {
     }
 
     public function getUserId(): int

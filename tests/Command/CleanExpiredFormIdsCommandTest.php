@@ -4,118 +4,75 @@ namespace AlipayMiniProgramBundle\Tests\Command;
 
 use AlipayMiniProgramBundle\Command\CleanExpiredFormIdsCommand;
 use AlipayMiniProgramBundle\Service\FormIdService;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Tester\CommandTester;
+use Tourze\PHPUnitSymfonyKernelTest\AbstractCommandTestCase;
 
-class CleanExpiredFormIdsCommandTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(CleanExpiredFormIdsCommand::class)]
+#[RunTestsInSeparateProcesses]
+final class CleanExpiredFormIdsCommandTest extends AbstractCommandTestCase
 {
-    private FormIdService|MockObject $formIdService;
-    private CleanExpiredFormIdsCommand $command;
-
-    protected function setUp(): void
+    protected function onSetUp(): void
     {
-        $this->formIdService = $this->createMock(FormIdService::class);
-        $this->command = new CleanExpiredFormIdsCommand($this->formIdService);
+        // 集成测试使用真实的服务实例
     }
 
-    public function test_constructor_initializes_correctly(): void
+    protected function getCommandTester(): CommandTester
     {
-        $this->assertInstanceOf(Command::class, $this->command);
-        $this->assertInstanceOf(CleanExpiredFormIdsCommand::class, $this->command);
+        $command = self::getService(CleanExpiredFormIdsCommand::class);
+
+        return new CommandTester($command);
     }
 
-    public function test_command_name_is_correct(): void
+    public function testConstructorInitializesCorrectly(): void
     {
-        $this->assertSame('alipay:mini-program:clean-expired-form-ids', $this->command->getName());
+        $command = self::getService(CleanExpiredFormIdsCommand::class);
+        $this->assertInstanceOf(CleanExpiredFormIdsCommand::class, $command);
     }
 
-    public function test_command_description_is_correct(): void
+    public function testCommandNameIsCorrect(): void
     {
-        $this->assertSame('清理过期的formId', $this->command->getDescription());
+        $command = self::getService(CleanExpiredFormIdsCommand::class);
+        $this->assertSame('alipay:mini-program:clean-expired-form-ids', $command->getName());
     }
 
-    public function test_execute_calls_form_id_service_and_returns_success(): void
+    public function testCommandDescriptionIsCorrect(): void
     {
-        $expectedCount = 5;
-        $input = $this->createMock(InputInterface::class);
-        $output = $this->createMock(OutputInterface::class);
-
-        $this->formIdService
-            ->expects($this->once())
-            ->method('cleanExpiredFormIds')
-            ->willReturn($expectedCount);
-
-        $output
-            ->expects($this->once())
-            ->method('writeln')
-            ->with('清理了 5 个过期的formId');
-
-        $result = $this->command->run($input, $output);
-
-        $this->assertSame(Command::SUCCESS, $result);
+        $command = self::getService(CleanExpiredFormIdsCommand::class);
+        $this->assertSame('清理过期的formId', $command->getDescription());
     }
 
-    public function test_execute_with_zero_cleaned_records(): void
+    public function testExecuteReturnsSuccess(): void
     {
-        $expectedCount = 0;
-        $input = $this->createMock(InputInterface::class);
-        $output = $this->createMock(OutputInterface::class);
+        $commandTester = $this->getCommandTester();
+        $exitCode = $commandTester->execute([]);
 
-        $this->formIdService
-            ->expects($this->once())
-            ->method('cleanExpiredFormIds')
-            ->willReturn($expectedCount);
-
-        $output
-            ->expects($this->once())
-            ->method('writeln')
-            ->with('清理了 0 个过期的formId');
-
-        $result = $this->command->run($input, $output);
-
-        $this->assertSame(Command::SUCCESS, $result);
+        $this->assertSame(Command::SUCCESS, $exitCode);
+        $this->assertStringContainsString('清理了', $commandTester->getDisplay());
+        $this->assertStringContainsString('个过期的formId', $commandTester->getDisplay());
     }
 
-    public function test_execute_with_large_number_of_cleaned_records(): void
+    public function testCommandExtendsCommandClass(): void
     {
-        $expectedCount = 1000;
-        $input = $this->createMock(InputInterface::class);
-        $output = $this->createMock(OutputInterface::class);
-
-        $this->formIdService
-            ->expects($this->once())
-            ->method('cleanExpiredFormIds')
-            ->willReturn($expectedCount);
-
-        $output
-            ->expects($this->once())
-            ->method('writeln')
-            ->with('清理了 1000 个过期的formId');
-
-        $result = $this->command->run($input, $output);
-
-        $this->assertSame(Command::SUCCESS, $result);
-    }
-
-
-    public function test_command_extends_command_class(): void
-    {
-        $reflection = new \ReflectionClass($this->command);
+        $command = self::getService(CleanExpiredFormIdsCommand::class);
+        $reflection = new \ReflectionClass($command);
         $parentClass = $reflection->getParentClass();
 
         $this->assertNotFalse($parentClass);
         $this->assertSame(Command::class, $parentClass->getName());
     }
 
-    public function test_constructor_requires_form_id_service(): void
+    public function testConstructorRequiresFormIdService(): void
     {
         $reflection = new \ReflectionClass(CleanExpiredFormIdsCommand::class);
         $constructor = $reflection->getConstructor();
+        $this->assertNotNull($constructor, 'Constructor must exist');
 
-        $this->assertNotNull($constructor);
         $parameters = $constructor->getParameters();
         $this->assertCount(1, $parameters);
 
@@ -126,14 +83,14 @@ class CleanExpiredFormIdsCommandTest extends TestCase
         $this->assertSame(FormIdService::class, $type->getName());
     }
 
-    public function test_command_has_as_command_attribute(): void
+    public function testCommandHasAsCommandAttribute(): void
     {
         $reflection = new \ReflectionClass(CleanExpiredFormIdsCommand::class);
         $attributes = $reflection->getAttributes();
 
         $hasAsCommandAttribute = false;
         foreach ($attributes as $attribute) {
-            if ($attribute->getName() === 'Symfony\Component\Console\Attribute\AsCommand') {
+            if ('Symfony\Component\Console\Attribute\AsCommand' === $attribute->getName()) {
                 $hasAsCommandAttribute = true;
                 break;
             }
@@ -142,22 +99,13 @@ class CleanExpiredFormIdsCommandTest extends TestCase
         $this->assertTrue($hasAsCommandAttribute, 'Command should have AsCommand attribute');
     }
 
-    public function test_execute_returns_integer(): void
+    public function testExecuteWithCommandTester(): void
     {
-        $input = $this->createMock(InputInterface::class);
-        $output = $this->createMock(OutputInterface::class);
+        $commandTester = $this->getCommandTester();
+        $commandTester->execute([]);
 
-        $this->formIdService
-            ->expects($this->once())
-            ->method('cleanExpiredFormIds')
-            ->willReturn(5);
-
-        $output
-            ->expects($this->once())
-            ->method('writeln');
-
-        $result = $this->command->run($input, $output);
-
-        $this->assertSame(Command::SUCCESS, $result);
+        $this->assertSame(Command::SUCCESS, $commandTester->getStatusCode());
+        $this->assertStringContainsString('清理了', $commandTester->getDisplay());
+        $this->assertStringContainsString('个过期的formId', $commandTester->getDisplay());
     }
 }

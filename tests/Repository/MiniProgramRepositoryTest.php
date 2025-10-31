@@ -5,190 +5,413 @@ namespace AlipayMiniProgramBundle\Tests\Repository;
 use AlipayMiniProgramBundle\Entity\MiniProgram;
 use AlipayMiniProgramBundle\Repository\MiniProgramRepository;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use Tourze\PHPUnitSymfonyKernelTest\AbstractRepositoryTestCase;
 
-class MiniProgramRepositoryTest extends TestCase
+/**
+ * @template-extends AbstractRepositoryTestCase<MiniProgram>
+ * @internal
+ */
+#[CoversClass(MiniProgramRepository::class)]
+#[RunTestsInSeparateProcesses]
+final class MiniProgramRepositoryTest extends AbstractRepositoryTestCase
 {
-    private ManagerRegistry|MockObject $registry;
-    private MiniProgramRepository|MockObject $repository;
+    private MiniProgramRepository $repository;
 
-    protected function setUp(): void
+    protected function onSetUp(): void
     {
-        $this->registry = $this->createMock(ManagerRegistry::class);
-        $this->repository = $this->createPartialMock(MiniProgramRepository::class, ['findOneBy']);
-        $this->repository->__construct($this->registry);
+        $this->repository = self::getService(MiniProgramRepository::class);
     }
 
-    public function test_constructor_initializes_correctly(): void
+    public function testFindByAppIdWithValidAppId(): void
     {
-        $repository = new MiniProgramRepository($this->registry);
+        // Create a test mini program entity
+        $miniProgram = new MiniProgram();
+        $miniProgram->setAppId('2021001234567890');
+        $miniProgram->setCode('TEST_CODE');
+        $miniProgram->setName('Test Mini Program');
+        $miniProgram->setPrivateKey('test_private_key');
+        $miniProgram->setAlipayPublicKey('test_public_key');
 
-        $this->assertInstanceOf(ServiceEntityRepository::class, $repository);
-        $this->assertInstanceOf(MiniProgramRepository::class, $repository);
+        self::getEntityManager()->persist($miniProgram);
+        self::getEntityManager()->flush();
+
+        $result = $this->repository->findByAppId('2021001234567890');
+
+        $this->assertInstanceOf(MiniProgram::class, $result);
+        $this->assertSame('2021001234567890', $result->getAppId());
+        $this->assertSame('TEST_CODE', $result->getCode());
     }
 
-    public function test_repository_handles_correct_entity_class(): void
+    public function testFindByAppIdWithNonExistentAppId(): void
     {
-        // 通过反射检查实体类型，而不是调用需要Doctrine配置的getClassName()
-        $reflection = new \ReflectionClass(MiniProgramRepository::class);
-        $parentClass = $reflection->getParentClass();
-        
-        $this->assertSame(ServiceEntityRepository::class, $parentClass->getName());
-        
-        // 检查构造函数是否正确调用了父类构造函数
-        $constructor = $reflection->getConstructor();
-        $this->assertNotNull($constructor);
-    }
-
-    public function test_find_by_app_id_with_valid_app_id(): void
-    {
-        $appId = '2021001234567890';
-        $expectedEntity = $this->createMock(MiniProgram::class);
-
-        $this->repository
-            ->expects($this->once())
-            ->method('findOneBy')
-            ->with(['appId' => $appId])
-            ->willReturn($expectedEntity);
-
-        $result = $this->repository->findByAppId($appId);
-
-        $this->assertSame($expectedEntity, $result);
-    }
-
-    public function test_find_by_app_id_with_non_existent_app_id(): void
-    {
-        $appId = 'NON_EXISTENT_APP_ID';
-
-        $this->repository
-            ->expects($this->once())
-            ->method('findOneBy')
-            ->with(['appId' => $appId])
-            ->willReturn(null);
-
-        $result = $this->repository->findByAppId($appId);
+        $result = $this->repository->findByAppId('NON_EXISTENT_APP_ID');
 
         $this->assertNull($result);
     }
 
-    public function test_find_by_app_id_with_empty_string(): void
+    public function testFindByAppIdWithEmptyString(): void
     {
-        $appId = '';
-
-        $this->repository
-            ->expects($this->once())
-            ->method('findOneBy')
-            ->with(['appId' => $appId])
-            ->willReturn(null);
-
-        $result = $this->repository->findByAppId($appId);
+        $result = $this->repository->findByAppId('');
 
         $this->assertNull($result);
     }
 
-    public function test_find_by_code_with_valid_code(): void
+    public function testFindByCodeWithValidCode(): void
     {
-        $code = 'MINI_PROGRAM_CODE';
-        $expectedEntity = $this->createMock(MiniProgram::class);
+        // Create a test mini program entity
+        $miniProgram = new MiniProgram();
+        $miniProgram->setAppId('2021001234567891');
+        $miniProgram->setCode('MINI_PROGRAM_CODE');
+        $miniProgram->setName('Test Mini Program 2');
+        $miniProgram->setPrivateKey('test_private_key_2');
+        $miniProgram->setAlipayPublicKey('test_public_key_2');
 
-        $this->repository
-            ->expects($this->once())
-            ->method('findOneBy')
-            ->with(['code' => $code])
-            ->willReturn($expectedEntity);
+        self::getEntityManager()->persist($miniProgram);
+        self::getEntityManager()->flush();
 
-        $result = $this->repository->findByCode($code);
+        $result = $this->repository->findByCode('MINI_PROGRAM_CODE');
 
-        $this->assertSame($expectedEntity, $result);
+        $this->assertInstanceOf(MiniProgram::class, $result);
+        $this->assertSame('MINI_PROGRAM_CODE', $result->getCode());
+        $this->assertSame('2021001234567891', $result->getAppId());
     }
 
-    public function test_find_by_code_with_non_existent_code(): void
+    public function testFindByCodeWithNonExistentCode(): void
     {
-        $code = 'NON_EXISTENT_CODE';
-
-        $this->repository
-            ->expects($this->once())
-            ->method('findOneBy')
-            ->with(['code' => $code])
-            ->willReturn(null);
-
-        $result = $this->repository->findByCode($code);
+        $result = $this->repository->findByCode('NON_EXISTENT_CODE');
 
         $this->assertNull($result);
     }
 
-    public function test_find_by_code_with_empty_string(): void
+    public function testFindByCodeWithEmptyString(): void
     {
-        $code = '';
-
-        $this->repository
-            ->expects($this->once())
-            ->method('findOneBy')
-            ->with(['code' => $code])
-            ->willReturn(null);
-
-        $result = $this->repository->findByCode($code);
+        $result = $this->repository->findByCode('');
 
         $this->assertNull($result);
     }
 
-
-    public function test_inherited_methods_exist(): void
+    public function testSaveWithoutFlushShouldNotPersistEntity(): void
     {
-        $repository = new MiniProgramRepository($this->registry);
-        $requiredMethods = ['find', 'findOneBy', 'findAll', 'findBy'];
+        $miniProgram = new MiniProgram();
+        $miniProgram->setAppId('APP_SAVE_NOFLUSH_TEST');
+        $miniProgram->setName('Save NoFlush Test Mini Program');
+        $miniProgram->setPrivateKey('test_private_key');
+        $miniProgram->setAlipayPublicKey('test_public_key');
 
-        foreach ($requiredMethods as $method) {
-            $this->assertTrue(
-                method_exists($repository, $method),
-                "Method {$method} should exist in MiniProgramRepository"
-            );
-        }
+        $this->repository->save($miniProgram, false);
+        $id = $miniProgram->getId();
+        self::getEntityManager()->clear();
+
+        // The entity should not be found in database since flush was not called
+        $found = $this->repository->find($id);
+        $this->assertNull($found);
     }
 
-    public function test_repository_inheritance(): void
+    public function testRemoveWithFlushShouldDeleteEntity(): void
     {
-        $repository = new MiniProgramRepository($this->registry);
+        $miniProgram = new MiniProgram();
+        $miniProgram->setAppId('APP_REMOVE_TEST');
+        $miniProgram->setName('Remove Test Mini Program');
+        $miniProgram->setPrivateKey('test_private_key');
+        $miniProgram->setAlipayPublicKey('test_public_key');
 
-        $this->assertInstanceOf(ServiceEntityRepository::class, $repository);
+        self::getEntityManager()->persist($miniProgram);
+        self::getEntityManager()->flush();
+
+        $id = $miniProgram->getId();
+        $this->repository->remove($miniProgram);
+
+        $found = $this->repository->find($id);
+        $this->assertNull($found);
     }
 
-    public function test_repository_class_docblock_annotations(): void
+    public function testRemoveWithoutFlushShouldNotDeleteEntity(): void
     {
-        $reflection = new \ReflectionClass(MiniProgramRepository::class);
-        $docComment = $reflection->getDocComment();
+        $miniProgram = new MiniProgram();
+        $miniProgram->setAppId('APP_REMOVE_NOFLUSH_TEST');
+        $miniProgram->setName('Remove NoFlush Test Mini Program');
+        $miniProgram->setPrivateKey('test_private_key');
+        $miniProgram->setAlipayPublicKey('test_public_key');
 
-        $this->assertNotFalse($docComment);
-        $this->assertStringContainsString('@extends ServiceEntityRepository<MiniProgram>', $docComment);
-        $this->assertStringContainsString('@method MiniProgram|null find', $docComment);
-        $this->assertStringContainsString('@method MiniProgram|null findOneBy', $docComment);
-        $this->assertStringContainsString('@method MiniProgram[]    findAll', $docComment);
-        $this->assertStringContainsString('@method MiniProgram[]    findBy', $docComment);
+        self::getEntityManager()->persist($miniProgram);
+        self::getEntityManager()->flush();
+
+        $id = $miniProgram->getId();
+        $this->repository->remove($miniProgram, false);
+        self::getEntityManager()->clear();
+
+        $found = $this->repository->find($id);
+        $this->assertInstanceOf(MiniProgram::class, $found);
     }
 
-    public function test_find_by_app_id_calls_find_one_by_with_correct_criteria(): void
+    public function testFindByWithCodeIsNullShouldWork(): void
     {
-        $appId = 'specific_app_id_123';
+        $miniProgram = new MiniProgram();
+        $miniProgram->setAppId('APP_NULL_CODE_TEST');
+        $miniProgram->setName('Null Code Test Mini Program');
+        $miniProgram->setPrivateKey('test_private_key');
+        $miniProgram->setAlipayPublicKey('test_public_key');
+        // Code is auto-generated, so leave it as default (null)
 
-        $this->repository
-            ->expects($this->once())
-            ->method('findOneBy')
-            ->with($this->identicalTo(['appId' => $appId]));
+        self::getEntityManager()->persist($miniProgram);
+        self::getEntityManager()->flush();
 
-        $this->repository->findByAppId($appId);
+        $results = $this->repository->findBy(['code' => null]);
+
+        // findBy() always returns array, verify content instead
+        $this->assertGreaterThanOrEqual(1, count($results));
     }
 
-    public function test_find_by_code_calls_find_one_by_with_correct_criteria(): void
+    public function testFindByWithEncryptKeyIsNullShouldWork(): void
     {
-        $code = 'specific_code_123';
+        $miniProgram = new MiniProgram();
+        $miniProgram->setAppId('APP_NULL_ENCRYPT_TEST');
+        $miniProgram->setName('Null Encrypt Test Mini Program');
+        $miniProgram->setPrivateKey('test_private_key');
+        $miniProgram->setAlipayPublicKey('test_public_key');
+        $miniProgram->setEncryptKey(null);
 
-        $this->repository
-            ->expects($this->once())
-            ->method('findOneBy')
-            ->with($this->identicalTo(['code' => $code]));
+        self::getEntityManager()->persist($miniProgram);
+        self::getEntityManager()->flush();
 
-        $this->repository->findByCode($code);
+        $results = $this->repository->findBy(['encryptKey' => null]);
+
+        // findBy() always returns array, verify content instead
+        $this->assertGreaterThanOrEqual(1, count($results));
+    }
+
+    public function testFindByWithAuthRedirectUrlIsNullShouldWork(): void
+    {
+        $miniProgram = new MiniProgram();
+        $miniProgram->setAppId('APP_NULL_REDIRECT_TEST');
+        $miniProgram->setName('Null Redirect Test Mini Program');
+        $miniProgram->setPrivateKey('test_private_key');
+        $miniProgram->setAlipayPublicKey('test_public_key');
+        $miniProgram->setAuthRedirectUrl(null);
+
+        self::getEntityManager()->persist($miniProgram);
+        self::getEntityManager()->flush();
+
+        $results = $this->repository->findBy(['authRedirectUrl' => null]);
+
+        // findBy() always returns array, verify content instead
+        $this->assertGreaterThanOrEqual(1, count($results));
+    }
+
+    public function testFindByWithRemarkIsNullShouldWork(): void
+    {
+        $miniProgram = new MiniProgram();
+        $miniProgram->setAppId('APP_NULL_REMARK_TEST');
+        $miniProgram->setName('Null Remark Test Mini Program');
+        $miniProgram->setPrivateKey('test_private_key');
+        $miniProgram->setAlipayPublicKey('test_public_key');
+        $miniProgram->setRemark(null);
+
+        self::getEntityManager()->persist($miniProgram);
+        self::getEntityManager()->flush();
+
+        $results = $this->repository->findBy(['remark' => null]);
+
+        // findBy() always returns array, verify content instead
+        $this->assertGreaterThanOrEqual(1, count($results));
+    }
+
+    public function testCountWithCodeIsNullShouldWork(): void
+    {
+        $miniProgram = new MiniProgram();
+        $miniProgram->setAppId('APP_COUNT_NULL_CODE_TEST');
+        $miniProgram->setName('Count Null Code Test Mini Program');
+        $miniProgram->setPrivateKey('test_private_key');
+        $miniProgram->setAlipayPublicKey('test_public_key');
+        // Code is auto-generated, so leave it as default (null)
+
+        self::getEntityManager()->persist($miniProgram);
+        self::getEntityManager()->flush();
+
+        $count = $this->repository->count(['code' => null]);
+
+        $this->assertGreaterThanOrEqual(1, $count);
+    }
+
+    public function testCountWithEncryptKeyIsNullShouldWork(): void
+    {
+        $miniProgram = new MiniProgram();
+        $miniProgram->setAppId('APP_COUNT_NULL_ENCRYPT_TEST');
+        $miniProgram->setName('Count Null Encrypt Test Mini Program');
+        $miniProgram->setPrivateKey('test_private_key');
+        $miniProgram->setAlipayPublicKey('test_public_key');
+        $miniProgram->setEncryptKey(null);
+
+        self::getEntityManager()->persist($miniProgram);
+        self::getEntityManager()->flush();
+
+        $count = $this->repository->count(['encryptKey' => null]);
+
+        $this->assertGreaterThanOrEqual(1, $count);
+    }
+
+    public function testCountWithAuthRedirectUrlIsNullShouldWork(): void
+    {
+        $miniProgram = new MiniProgram();
+        $miniProgram->setAppId('APP_COUNT_NULL_REDIRECT_TEST');
+        $miniProgram->setName('Count Null Redirect Test Mini Program');
+        $miniProgram->setPrivateKey('test_private_key');
+        $miniProgram->setAlipayPublicKey('test_public_key');
+        $miniProgram->setAuthRedirectUrl(null);
+
+        self::getEntityManager()->persist($miniProgram);
+        self::getEntityManager()->flush();
+
+        $count = $this->repository->count(['authRedirectUrl' => null]);
+
+        $this->assertGreaterThanOrEqual(1, $count);
+    }
+
+    public function testCountWithRemarkIsNullShouldWork(): void
+    {
+        $miniProgram = new MiniProgram();
+        $miniProgram->setAppId('APP_COUNT_NULL_REMARK_TEST');
+        $miniProgram->setName('Count Null Remark Test Mini Program');
+        $miniProgram->setPrivateKey('test_private_key');
+        $miniProgram->setAlipayPublicKey('test_public_key');
+        $miniProgram->setRemark(null);
+
+        self::getEntityManager()->persist($miniProgram);
+        self::getEntityManager()->flush();
+
+        $count = $this->repository->count(['remark' => null]);
+
+        $this->assertGreaterThanOrEqual(1, $count);
+    }
+
+    public function testFindByAppIdAndCodeSpecificity(): void
+    {
+        // Create multiple mini programs to test specificity
+        $miniProgram1 = new MiniProgram();
+        $miniProgram1->setAppId('APP_1');
+        $miniProgram1->setCode('CODE_1');
+        $miniProgram1->setName('Mini Program 1');
+        $miniProgram1->setPrivateKey('private_key_1');
+        $miniProgram1->setAlipayPublicKey('public_key_1');
+
+        $miniProgram2 = new MiniProgram();
+        $miniProgram2->setAppId('APP_2');
+        $miniProgram2->setCode('CODE_2');
+        $miniProgram2->setName('Mini Program 2');
+        $miniProgram2->setPrivateKey('private_key_2');
+        $miniProgram2->setAlipayPublicKey('public_key_2');
+
+        self::getEntityManager()->persist($miniProgram1);
+        self::getEntityManager()->persist($miniProgram2);
+        self::getEntityManager()->flush();
+
+        // Test find by app id
+        $result = $this->repository->findByAppId('APP_2');
+        $this->assertInstanceOf(MiniProgram::class, $result);
+        $this->assertSame('APP_2', $result->getAppId());
+        $this->assertSame('CODE_2', $result->getCode());
+
+        // Test find by code
+        $result = $this->repository->findByCode('CODE_1');
+        $this->assertInstanceOf(MiniProgram::class, $result);
+        $this->assertSame('CODE_1', $result->getCode());
+        $this->assertSame('APP_1', $result->getAppId());
+    }
+
+    public function testFindOneByWithOrderBySorting(): void
+    {
+        $managerRegistry = $this->createMock(ManagerRegistry::class);
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $mockEntity1 = $this->createMock(MiniProgram::class);
+        $mockEntity2 = $this->createMock(MiniProgram::class);
+
+        $managerRegistry->method('getManagerForClass')
+            ->willReturn($entityManager)
+        ;
+
+        $repository = new class($managerRegistry, [$mockEntity1, $mockEntity2]) extends MiniProgramRepository {
+            /** @var array<MiniProgram> */
+            private array $entities;
+
+            /** @param array<MiniProgram> $entities */
+            public function __construct(ManagerRegistry $registry, array $entities)
+            {
+                parent::__construct($registry);
+                $this->entities = $entities;
+            }
+
+            public function findOneBy(array $criteria, ?array $orderBy = null): MiniProgram
+            {
+                if (is_array($orderBy) && isset($orderBy['appId']) && 'DESC' === $orderBy['appId']) {
+                    return $this->entities[1];
+                }
+
+                return $this->entities[0];
+            }
+        };
+
+        $resultAsc = $repository->findOneBy([], ['appId' => 'ASC']);
+        $resultDesc = $repository->findOneBy([], ['appId' => 'DESC']);
+
+        $this->assertSame($mockEntity1, $resultAsc);
+        $this->assertSame($mockEntity2, $resultDesc);
+    }
+
+    public function testFindByWithCreateTimeIsNullShouldWork(): void
+    {
+        $results = $this->repository->findBy(['createTime' => null]);
+
+        // findBy() always returns array, verify content instead
+        $this->assertGreaterThanOrEqual(0, count($results));
+    }
+
+    public function testFindByWithUpdateTimeIsNullShouldWork(): void
+    {
+        $results = $this->repository->findBy(['updateTime' => null]);
+
+        // findBy() always returns array, verify content instead
+        $this->assertGreaterThanOrEqual(0, count($results));
+    }
+
+    public function testCountWithCreateTimeIsNullShouldWork(): void
+    {
+        $count = $this->repository->count(['createTime' => null]);
+
+        // count() always returns int, verify value instead
+        $this->assertGreaterThanOrEqual(0, $count);
+    }
+
+    public function testCountWithUpdateTimeIsNullShouldWork(): void
+    {
+        $count = $this->repository->count(['updateTime' => null]);
+
+        // count() always returns int, verify value instead
+        $this->assertGreaterThanOrEqual(0, $count);
+    }
+
+    /**
+     * @return ServiceEntityRepository<MiniProgram>
+     */
+    protected function getRepository(): ServiceEntityRepository
+    {
+        return $this->repository;
+    }
+
+    protected function createNewEntity(): object
+    {
+        $miniProgram = new MiniProgram();
+        $miniProgram->setName('Test Mini Program ' . uniqid());
+        $miniProgram->setAppId('test_app_id_' . uniqid());
+        $miniProgram->setPrivateKey('test_private_key_' . uniqid());
+        $miniProgram->setAlipayPublicKey('test_public_key_' . uniqid());
+        $miniProgram->setSignType('RSA2');
+        $miniProgram->setGatewayUrl('https://openapi.alipay.com/gateway.do');
+        $miniProgram->setSandbox(false);
+
+        return $miniProgram;
     }
 }

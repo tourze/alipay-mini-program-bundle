@@ -5,19 +5,14 @@ namespace AlipayMiniProgramBundle\Repository;
 use AlipayMiniProgramBundle\Entity\MiniProgram;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-
+use Tourze\PHPUnitSymfonyKernelTest\Attribute\AsRepository;
 
 /**
  * @extends ServiceEntityRepository<MiniProgram>
- *
- * @method MiniProgram|null find($id, $lockMode = null, $lockVersion = null)
- * @method MiniProgram|null findOneBy(array $criteria, array $orderBy = null)
- * @method MiniProgram[]    findAll()
- * @method MiniProgram[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
+#[AsRepository(entityClass: MiniProgram::class)]
 class MiniProgramRepository extends ServiceEntityRepository
 {
-
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, MiniProgram::class);
@@ -31,5 +26,23 @@ class MiniProgramRepository extends ServiceEntityRepository
     public function findByCode(string $code): ?MiniProgram
     {
         return $this->findOneBy(['code' => $code]);
+    }
+
+    public function save(MiniProgram $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function remove(MiniProgram $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->remove($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
     }
 }

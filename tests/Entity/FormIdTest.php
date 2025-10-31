@@ -3,34 +3,59 @@
 namespace AlipayMiniProgramBundle\Tests\Entity;
 
 use AlipayMiniProgramBundle\Entity\FormId;
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use Tourze\PHPUnitDoctrineEntity\AbstractEntityTestCase;
 
-class FormIdTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(FormId::class)]
+final class FormIdTest extends AbstractEntityTestCase
 {
-    public function testGettersAndSetters(): void
+    protected function createEntity(): object
+    {
+        return new FormId();
+    }
+
+    /**
+     * @return iterable<string, array{string, mixed}>
+     */
+    public static function propertiesProvider(): iterable
+    {
+        $now = new \DateTimeImmutable();
+
+        return [
+            'formId' => ['formId', 'test_form_id'],
+            'expireTime' => ['expireTime', $now],
+            'usedCount' => ['usedCount', 2],
+        ];
+    }
+
+    public function testIncrementUsedCount(): void
     {
         // Arrange
         $formId = new FormId();
-        $now = new \DateTimeImmutable();
-
-        // Act & Assert
-        $this->assertEquals(0, $formId->getId());
-
-        $formId->setFormId('test_form_id');
-        $this->assertEquals('test_form_id', $formId->getFormId());
-
-        $formId->setExpireTime($now);
-        $this->assertSame($now, $formId->getExpireTime());
-
         $formId->setUsedCount(2);
-        $this->assertEquals(2, $formId->getUsedCount());
 
+        // Act
         $formId->incrementUsedCount();
-        $this->assertEquals(3, $formId->getUsedCount());
 
+        // Assert
+
+        $this->assertEquals(3, $formId->getUsedCount());
+    }
+
+    public function testIsUsed(): void
+    {
+        // Arrange
+        $formId = new FormId();
+
+        // Act & Assert - Test when usedCount >= 3
+        $formId->setUsedCount(3);
         $this->assertTrue($formId->isUsed());
 
-        $formId->setUsedCount(1);
+        // Act & Assert - Test when usedCount < 3
+        $formId->setUsedCount(2);
         $this->assertFalse($formId->isUsed());
     }
 }

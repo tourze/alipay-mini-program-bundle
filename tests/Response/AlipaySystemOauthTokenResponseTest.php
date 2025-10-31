@@ -3,11 +3,16 @@
 namespace AlipayMiniProgramBundle\Tests\Response;
 
 use AlipayMiniProgramBundle\Response\AlipaySystemOauthTokenResponse;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-class AlipaySystemOauthTokenResponseTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(AlipaySystemOauthTokenResponse::class)]
+final class AlipaySystemOauthTokenResponseTest extends TestCase
 {
-    public function test_constructor_with_successful_response(): void
+    public function testConstructorWithSuccessfulResponse(): void
     {
         $responseData = (object) [
             'code' => '10000',
@@ -18,7 +23,7 @@ class AlipaySystemOauthTokenResponseTest extends TestCase
             'refresh_token' => 'test_refresh_token_abc',
             'expires_in' => '3600',
             're_expires_in' => '7200',
-            'auth_start' => '2023-01-01 00:00:00'
+            'auth_start' => '2023-01-01 00:00:00',
         ];
 
         $response = new AlipaySystemOauthTokenResponse($responseData);
@@ -35,13 +40,13 @@ class AlipaySystemOauthTokenResponseTest extends TestCase
         $this->assertSame('2023-01-01 00:00:00', $response->getAuthStart());
     }
 
-    public function test_constructor_with_failed_response(): void
+    public function testConstructorWithFailedResponse(): void
     {
         $responseData = (object) [
             'code' => '40001',
             'msg' => 'Missing Required Arguments',
             'sub_code' => 'isv.missing-signature',
-            'sub_msg' => '缺少签名参数'
+            'sub_msg' => '缺少签名参数',
         ];
 
         $response = new AlipaySystemOauthTokenResponse($responseData);
@@ -60,7 +65,7 @@ class AlipaySystemOauthTokenResponseTest extends TestCase
         $this->assertNull($response->getAuthStart());
     }
 
-    public function test_constructor_with_empty_response(): void
+    public function testConstructorWithEmptyResponse(): void
     {
         $responseData = new \stdClass();
 
@@ -80,12 +85,12 @@ class AlipaySystemOauthTokenResponseTest extends TestCase
         $this->assertNull($response->getAuthStart());
     }
 
-    public function test_constructor_with_integer_expires_in(): void
+    public function testConstructorWithIntegerExpiresIn(): void
     {
         $responseData = (object) [
             'code' => '10000',
             'expires_in' => 3600,
-            're_expires_in' => 7200
+            're_expires_in' => 7200,
         ];
 
         $response = new AlipaySystemOauthTokenResponse($responseData);
@@ -94,12 +99,12 @@ class AlipaySystemOauthTokenResponseTest extends TestCase
         $this->assertSame(7200, $response->getReExpiresIn());
     }
 
-    public function test_constructor_with_string_expires_in(): void
+    public function testConstructorWithStringExpiresIn(): void
     {
         $responseData = (object) [
             'code' => '10000',
             'expires_in' => '3600',
-            're_expires_in' => '7200'
+            're_expires_in' => '7200',
         ];
 
         $response = new AlipaySystemOauthTokenResponse($responseData);
@@ -108,12 +113,12 @@ class AlipaySystemOauthTokenResponseTest extends TestCase
         $this->assertSame(7200, $response->getReExpiresIn());
     }
 
-    public function test_constructor_with_null_expires_in(): void
+    public function testConstructorWithNullExpiresIn(): void
     {
         $responseData = (object) [
             'code' => '10000',
             'expires_in' => null,
-            're_expires_in' => null
+            're_expires_in' => null,
         ];
 
         $response = new AlipaySystemOauthTokenResponse($responseData);
@@ -122,7 +127,7 @@ class AlipaySystemOauthTokenResponseTest extends TestCase
         $this->assertNull($response->getReExpiresIn());
     }
 
-    public function test_is_success_with_null_code(): void
+    public function testIsSuccessWithNullCode(): void
     {
         $responseData = new \stdClass();
 
@@ -131,7 +136,7 @@ class AlipaySystemOauthTokenResponseTest extends TestCase
         $this->assertTrue($response->isSuccess());
     }
 
-    public function test_is_success_with_success_code(): void
+    public function testIsSuccessWithSuccessCode(): void
     {
         $responseData = (object) ['code' => '10000'];
 
@@ -140,7 +145,7 @@ class AlipaySystemOauthTokenResponseTest extends TestCase
         $this->assertTrue($response->isSuccess());
     }
 
-    public function test_is_success_with_error_code(): void
+    public function testIsSuccessWithErrorCode(): void
     {
         $responseData = (object) ['code' => '40001'];
 
@@ -149,12 +154,12 @@ class AlipaySystemOauthTokenResponseTest extends TestCase
         $this->assertFalse($response->isSuccess());
     }
 
-    public function test_constructor_with_partial_data(): void
+    public function testConstructorWithPartialData(): void
     {
         $responseData = (object) [
             'code' => '10000',
             'user_id' => 'test_user_123',
-            'access_token' => 'test_access_token_789'
+            'access_token' => 'test_access_token_789',
             // 缺少其他字段
         ];
 
@@ -170,23 +175,25 @@ class AlipaySystemOauthTokenResponseTest extends TestCase
         $this->assertNull($response->getAuthStart());
     }
 
-    public function test_all_getter_methods_exist(): void
+    public function testAllGetterMethodsExist(): void
     {
         $methods = [
             'isSuccess', 'getCode', 'getMsg', 'getSubCode', 'getSubMsg',
             'getUserId', 'getOpenId', 'getAccessToken', 'getRefreshToken',
-            'getExpiresIn', 'getReExpiresIn', 'getAuthStart'
+            'getExpiresIn', 'getReExpiresIn', 'getAuthStart',
         ];
 
         foreach ($methods as $method) {
+            // Verify all required methods exist by creating instance and checking method
+            $instance = new AlipaySystemOauthTokenResponse((object) ['test' => 'response']);
             $this->assertTrue(
-                method_exists(AlipaySystemOauthTokenResponse::class, $method),
-                "Method {$method} should exist"
+                method_exists($instance, $method),
+                "Method {$method} should exist on instance"
             );
         }
     }
 
-    public function test_constructor_with_all_fields(): void
+    public function testConstructorWithAllFields(): void
     {
         $responseData = (object) [
             'code' => '10000',
@@ -199,7 +206,7 @@ class AlipaySystemOauthTokenResponseTest extends TestCase
             'refresh_token' => 'test_refresh_token_abc',
             'expires_in' => '3600',
             're_expires_in' => '7200',
-            'auth_start' => '2023-01-01 00:00:00'
+            'auth_start' => '2023-01-01 00:00:00',
         ];
 
         $response = new AlipaySystemOauthTokenResponse($responseData);
@@ -218,18 +225,17 @@ class AlipaySystemOauthTokenResponseTest extends TestCase
         $this->assertSame('2023-01-01 00:00:00', $response->getAuthStart());
     }
 
-    public function test_constructor_accepts_stdclass(): void
+    public function testConstructorAcceptsStdclass(): void
     {
         $responseData = new \stdClass();
         $responseData->code = '10000';
 
         $response = new AlipaySystemOauthTokenResponse($responseData);
 
-        $this->assertInstanceOf(AlipaySystemOauthTokenResponse::class, $response);
         $this->assertTrue($response->isSuccess());
     }
 
-    public function test_response_immutability(): void
+    public function testResponseImmutability(): void
     {
         $responseData = (object) ['code' => '10000'];
         $response = new AlipaySystemOauthTokenResponse($responseData);
@@ -238,19 +244,19 @@ class AlipaySystemOauthTokenResponseTest extends TestCase
         $reflection = new \ReflectionClass($response);
         $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
 
-        $setterMethods = array_filter($methods, function($method) {
+        $setterMethods = array_filter($methods, function (\ReflectionMethod $method) {
             return str_starts_with($method->getName(), 'set');
         });
 
         $this->assertEmpty($setterMethods, 'Response should be immutable - no setter methods allowed');
     }
 
-    public function test_constructor_parameter_type(): void
+    public function testConstructorParameterType(): void
     {
         $reflection = new \ReflectionClass(AlipaySystemOauthTokenResponse::class);
         $constructor = $reflection->getConstructor();
+        $this->assertNotNull($constructor, 'Constructor must exist');
 
-        $this->assertNotNull($constructor);
         $parameters = $constructor->getParameters();
         $this->assertCount(1, $parameters);
 
@@ -261,7 +267,7 @@ class AlipaySystemOauthTokenResponseTest extends TestCase
         $this->assertSame('stdClass', $type->getName());
     }
 
-    public function test_expires_in_conversion_edge_cases(): void
+    public function testExpiresInConversionEdgeCases(): void
     {
         // 测试零值 - 由于代码逻辑，0会被认为是falsy，返回null
         $zeroResponse = (object) ['expires_in' => '0', 're_expires_in' => '0'];
@@ -282,11 +288,11 @@ class AlipaySystemOauthTokenResponseTest extends TestCase
         $this->assertSame(999999999, $largeResult->getReExpiresIn());
     }
 
-    public function test_constructor_with_missing_optional_fields(): void
+    public function testConstructorWithMissingOptionalFields(): void
     {
         $responseData = (object) [
             'code' => '10000',
-            'user_id' => 'test_user_123'
+            'user_id' => 'test_user_123',
             // 只有必要字段
         ];
 
@@ -304,4 +310,4 @@ class AlipaySystemOauthTokenResponseTest extends TestCase
         $this->assertNull($response->getReExpiresIn());
         $this->assertNull($response->getAuthStart());
     }
-} 
+}

@@ -4,10 +4,12 @@ services:
     autowire: true      # Automatically injects dependencies in your services.
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
 
-  AlipayMiniProgramBundle\Command\:
-    resource: '../../Command/'
+  # make classes in src/ available to be used as services
+  # this creates a service per class whose id is the fully-qualified class name
   AlipayMiniProgramBundle\Controller\:
     resource: '../../Controller/'
+  AlipayMiniProgramBundle\Command\:
+    resource: '../../Command/'
   AlipayMiniProgramBundle\EventSubscriber\:
     resource: '../../EventSubscriber/'
   AlipayMiniProgramBundle\MessageHandler\:
@@ -18,3 +20,8 @@ services:
     resource: '../../Repository/'
   AlipayMiniProgramBundle\Service\:
     resource: '../../Service/'
+
+  # 明确配置TemplateMessageService以正确注入环境参数
+  AlipayMiniProgramBundle\Service\TemplateMessageService:
+    arguments:
+      $environment: '%kernel.environment%'

@@ -5,19 +5,34 @@ namespace AlipayMiniProgramBundle\Repository;
 use AlipayMiniProgramBundle\Entity\AlipayUserPhone;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Tourze\PHPUnitSymfonyKernelTest\Attribute\AsRepository;
 
 /**
  * @extends ServiceEntityRepository<AlipayUserPhone>
- *
- * @method AlipayUserPhone|null find($id, $lockMode = null, $lockVersion = null)
- * @method AlipayUserPhone|null findOneBy(array $criteria, array $orderBy = null)
- * @method AlipayUserPhone[]    findAll()
- * @method AlipayUserPhone[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
+#[AsRepository(entityClass: AlipayUserPhone::class)]
 class AlipayUserPhoneRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, AlipayUserPhone::class);
+    }
+
+    public function save(AlipayUserPhone $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function remove(AlipayUserPhone $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->remove($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
     }
 }

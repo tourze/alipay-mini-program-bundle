@@ -4,69 +4,79 @@ namespace AlipayMiniProgramBundle\Entity;
 
 use AlipayMiniProgramBundle\Enum\AlipayAuthScope;
 use AlipayMiniProgramBundle\Repository\AuthCodeRepository;
-use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Tourze\DoctrineIpBundle\Attribute\CreateIpColumn;
-use Tourze\DoctrineIpBundle\Attribute\UpdateIpColumn;
+use Symfony\Component\Validator\Constraints as Assert;
+use Tourze\DoctrineIpBundle\Traits\IpTraceableAware;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 
 #[ORM\Entity(repositoryClass: AuthCodeRepository::class)]
 #[ORM\Table(name: 'alipay_mini_program_auth_code', options: ['comment' => '支付宝小程序授权码表'])]
-#[AsEntityListener]
 class AuthCode implements \Stringable
 {
+    use TimestampableAware;
+    use IpTraceableAware;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
-    private ?int $id = 0;
+    private int $id = 0;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL', options: ['comment' => '关联的支付宝用户'])]
     private ?User $alipayUser = null;
 
     #[ORM\Column(length: 128, options: ['comment' => '授权码，用于换取访问令牌'])]
+    #[Assert\NotNull]
+    #[Assert\Length(max: 128)]
     private ?string $authCode = null;
 
     #[ORM\Column(length: 32, enumType: AlipayAuthScope::class, options: ['comment' => '授权范围'])]
+    #[Assert\NotNull]
+    #[Assert\Choice(callback: [AlipayAuthScope::class, 'cases'])]
     private ?AlipayAuthScope $scope = null;
 
     #[ORM\Column(length: 32, nullable: true, options: ['comment' => '授权请求中的状态值，用于防止CSRF攻击'])]
+    #[Assert\Length(max: 32)]
     private ?string $state = null;
 
     #[ORM\Column(length: 64, options: ['comment' => '支付宝用户的 user_id，已废弃'])]
+    #[Assert\NotNull]
+    #[Assert\Length(max: 64)]
     private ?string $userId = null;
 
     #[ORM\Column(length: 64, options: ['comment' => '支付宝用户的 open_id'])]
+    #[Assert\NotNull]
+    #[Assert\Length(max: 64)]
     private ?string $openId = null;
 
     #[ORM\Column(length: 128, options: ['comment' => '访问令牌'])]
+    #[Assert\NotNull]
+    #[Assert\Length(max: 128)]
     private ?string $accessToken = null;
 
     #[ORM\Column(length: 128, options: ['comment' => '刷新令牌'])]
+    #[Assert\NotNull]
+    #[Assert\Length(max: 128)]
     private ?string $refreshToken = null;
 
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => '访问令牌的有效时间，单位：秒'])]
+    #[Assert\NotNull]
+    #[Assert\Range(min: 1)]
     private ?int $expiresIn = null;
 
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => '刷新令牌的有效时间，单位：秒'])]
+    #[Assert\NotNull]
+    #[Assert\Range(min: 1)]
     private ?int $reExpiresIn = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, options: ['comment' => '授权开始时间'])]
+    #[Assert\NotNull]
     private ?\DateTimeImmutable $authStart = null;
 
     #[ORM\Column(length: 128, nullable: true, options: ['comment' => '签名'])]
+    #[Assert\Length(max: 128)]
     private ?string $sign = null;
-
-    #[CreateIpColumn]
-    #[ORM\Column(length: 128, nullable: true, options: ['comment' => '创建时IP'])]
-    private ?string $createdFromIp = null;
-
-    #[UpdateIpColumn]
-    #[ORM\Column(length: 128, nullable: true, options: ['comment' => '更新时IP'])]
-    private ?string $updatedFromIp = null;
-
-    use TimestampableAware;
 
     public function getId(): ?int
     {
@@ -78,11 +88,9 @@ class AuthCode implements \Stringable
         return $this->alipayUser;
     }
 
-    public function setAlipayUser(?User $alipayUser): static
+    public function setAlipayUser(?User $alipayUser): void
     {
         $this->alipayUser = $alipayUser;
-
-        return $this;
     }
 
     public function getAuthCode(): ?string
@@ -90,11 +98,9 @@ class AuthCode implements \Stringable
         return $this->authCode;
     }
 
-    public function setAuthCode(string $authCode): static
+    public function setAuthCode(string $authCode): void
     {
         $this->authCode = $authCode;
-
-        return $this;
     }
 
     public function getScope(): ?AlipayAuthScope
@@ -102,11 +108,9 @@ class AuthCode implements \Stringable
         return $this->scope;
     }
 
-    public function setScope(AlipayAuthScope $scope): static
+    public function setScope(AlipayAuthScope $scope): void
     {
         $this->scope = $scope;
-
-        return $this;
     }
 
     public function getState(): ?string
@@ -114,11 +118,9 @@ class AuthCode implements \Stringable
         return $this->state;
     }
 
-    public function setState(?string $state): static
+    public function setState(?string $state): void
     {
         $this->state = $state;
-
-        return $this;
     }
 
     public function getUserId(): ?string
@@ -126,11 +128,9 @@ class AuthCode implements \Stringable
         return $this->userId;
     }
 
-    public function setUserId(string $userId): static
+    public function setUserId(string $userId): void
     {
         $this->userId = $userId;
-
-        return $this;
     }
 
     public function getOpenId(): ?string
@@ -138,11 +138,9 @@ class AuthCode implements \Stringable
         return $this->openId;
     }
 
-    public function setOpenId(string $openId): static
+    public function setOpenId(string $openId): void
     {
         $this->openId = $openId;
-
-        return $this;
     }
 
     public function getAccessToken(): ?string
@@ -150,11 +148,9 @@ class AuthCode implements \Stringable
         return $this->accessToken;
     }
 
-    public function setAccessToken(string $accessToken): static
+    public function setAccessToken(string $accessToken): void
     {
         $this->accessToken = $accessToken;
-
-        return $this;
     }
 
     public function getRefreshToken(): ?string
@@ -162,11 +158,9 @@ class AuthCode implements \Stringable
         return $this->refreshToken;
     }
 
-    public function setRefreshToken(string $refreshToken): static
+    public function setRefreshToken(string $refreshToken): void
     {
         $this->refreshToken = $refreshToken;
-
-        return $this;
     }
 
     public function getExpiresIn(): ?int
@@ -174,11 +168,9 @@ class AuthCode implements \Stringable
         return $this->expiresIn;
     }
 
-    public function setExpiresIn(int $expiresIn): static
+    public function setExpiresIn(int $expiresIn): void
     {
         $this->expiresIn = $expiresIn;
-
-        return $this;
     }
 
     public function getReExpiresIn(): ?int
@@ -186,11 +178,9 @@ class AuthCode implements \Stringable
         return $this->reExpiresIn;
     }
 
-    public function setReExpiresIn(int $reExpiresIn): static
+    public function setReExpiresIn(int $reExpiresIn): void
     {
         $this->reExpiresIn = $reExpiresIn;
-
-        return $this;
     }
 
     public function getAuthStart(): ?\DateTimeImmutable
@@ -198,11 +188,9 @@ class AuthCode implements \Stringable
         return $this->authStart;
     }
 
-    public function setAuthStart(\DateTimeInterface $authStart): static
+    public function setAuthStart(\DateTimeInterface $authStart): void
     {
         $this->authStart = $authStart instanceof \DateTimeImmutable ? $authStart : \DateTimeImmutable::createFromInterface($authStart);
-
-        return $this;
     }
 
     public function getSign(): ?string
@@ -210,35 +198,9 @@ class AuthCode implements \Stringable
         return $this->sign;
     }
 
-    public function setSign(?string $sign): static
+    public function setSign(?string $sign): void
     {
         $this->sign = $sign;
-
-        return $this;
-    }
-
-    public function setCreatedFromIp(?string $createdFromIp): self
-    {
-        $this->createdFromIp = $createdFromIp;
-
-        return $this;
-    }
-
-    public function getCreatedFromIp(): ?string
-    {
-        return $this->createdFromIp;
-    }
-
-    public function setUpdatedFromIp(?string $updatedFromIp): self
-    {
-        $this->updatedFromIp = $updatedFromIp;
-
-        return $this;
-    }
-
-    public function getUpdatedFromIp(): ?string
-    {
-        return $this->updatedFromIp;
     }
 
     public function __toString(): string

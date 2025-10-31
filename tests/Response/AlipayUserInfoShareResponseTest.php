@@ -4,11 +4,16 @@ namespace AlipayMiniProgramBundle\Tests\Response;
 
 use AlipayMiniProgramBundle\Enum\AlipayUserGender;
 use AlipayMiniProgramBundle\Response\AlipayUserInfoShareResponse;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-class AlipayUserInfoShareResponseTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(AlipayUserInfoShareResponse::class)]
+final class AlipayUserInfoShareResponseTest extends TestCase
 {
-    public function test_constructor_with_successful_response(): void
+    public function testConstructorWithSuccessfulResponse(): void
     {
         $responseData = (object) [
             'code' => '10000',
@@ -18,7 +23,7 @@ class AlipayUserInfoShareResponseTest extends TestCase
             'province' => '浙江省',
             'city' => '杭州市',
             'nick_name' => '测试用户',
-            'gender' => 'M'
+            'gender' => 'M',
         ];
 
         $response = new AlipayUserInfoShareResponse($responseData);
@@ -34,13 +39,13 @@ class AlipayUserInfoShareResponseTest extends TestCase
         $this->assertSame(AlipayUserGender::MALE, $response->getGender());
     }
 
-    public function test_constructor_with_failed_response(): void
+    public function testConstructorWithFailedResponse(): void
     {
         $responseData = (object) [
             'code' => '40001',
             'msg' => 'Missing Required Arguments',
             'sub_code' => 'isv.missing-signature',
-            'sub_msg' => '缺少签名参数'
+            'sub_msg' => '缺少签名参数',
         ];
 
         $response = new AlipayUserInfoShareResponse($responseData);
@@ -58,7 +63,7 @@ class AlipayUserInfoShareResponseTest extends TestCase
         $this->assertNull($response->getGender());
     }
 
-    public function test_constructor_with_empty_response(): void
+    public function testConstructorWithEmptyResponse(): void
     {
         $responseData = new \stdClass();
 
@@ -77,11 +82,11 @@ class AlipayUserInfoShareResponseTest extends TestCase
         $this->assertNull($response->getGender());
     }
 
-    public function test_constructor_with_female_gender(): void
+    public function testConstructorWithFemaleGender(): void
     {
         $responseData = (object) [
             'code' => '10000',
-            'gender' => 'F'
+            'gender' => 'F',
         ];
 
         $response = new AlipayUserInfoShareResponse($responseData);
@@ -89,22 +94,22 @@ class AlipayUserInfoShareResponseTest extends TestCase
         $this->assertSame(AlipayUserGender::FEMALE, $response->getGender());
     }
 
-    public function test_constructor_with_invalid_gender_throws_exception(): void
+    public function testConstructorWithInvalidGenderThrowsException(): void
     {
         $responseData = (object) [
             'code' => '10000',
-            'gender' => 'U'
+            'gender' => 'U',
         ];
 
         $this->expectException(\ValueError::class);
         new AlipayUserInfoShareResponse($responseData);
     }
 
-    public function test_constructor_without_gender(): void
+    public function testConstructorWithoutGender(): void
     {
         $responseData = (object) [
             'code' => '10000',
-            'user_id' => 'test_user_123'
+            'user_id' => 'test_user_123',
         ];
 
         $response = new AlipayUserInfoShareResponse($responseData);
@@ -112,7 +117,7 @@ class AlipayUserInfoShareResponseTest extends TestCase
         $this->assertNull($response->getGender());
     }
 
-    public function test_is_success_with_null_code(): void
+    public function testIsSuccessWithNullCode(): void
     {
         $responseData = new \stdClass();
 
@@ -121,7 +126,7 @@ class AlipayUserInfoShareResponseTest extends TestCase
         $this->assertTrue($response->isSuccess());
     }
 
-    public function test_is_success_with_success_code(): void
+    public function testIsSuccessWithSuccessCode(): void
     {
         $responseData = (object) ['code' => '10000'];
 
@@ -130,7 +135,7 @@ class AlipayUserInfoShareResponseTest extends TestCase
         $this->assertTrue($response->isSuccess());
     }
 
-    public function test_is_success_with_error_code(): void
+    public function testIsSuccessWithErrorCode(): void
     {
         $responseData = (object) ['code' => '40001'];
 
@@ -139,12 +144,12 @@ class AlipayUserInfoShareResponseTest extends TestCase
         $this->assertFalse($response->isSuccess());
     }
 
-    public function test_constructor_with_partial_data(): void
+    public function testConstructorWithPartialData(): void
     {
         $responseData = (object) [
             'code' => '10000',
             'user_id' => 'test_user_123',
-            'nick_name' => '测试用户'
+            'nick_name' => '测试用户',
             // 缺少其他字段
         ];
 
@@ -159,22 +164,24 @@ class AlipayUserInfoShareResponseTest extends TestCase
         $this->assertNull($response->getGender());
     }
 
-    public function test_all_getter_methods_exist(): void
+    public function testAllGetterMethodsExist(): void
     {
         $methods = [
             'isSuccess', 'getCode', 'getMsg', 'getSubCode', 'getSubMsg',
-            'getUserId', 'getAvatar', 'getProvince', 'getCity', 'getNickName', 'getGender'
+            'getUserId', 'getAvatar', 'getProvince', 'getCity', 'getNickName', 'getGender',
         ];
 
         foreach ($methods as $method) {
+            // Verify all required methods exist by creating instance and checking method
+            $instance = new AlipayUserInfoShareResponse((object) ['test' => 'response']);
             $this->assertTrue(
-                method_exists(AlipayUserInfoShareResponse::class, $method),
-                "Method {$method} should exist"
+                method_exists($instance, $method),
+                "Method {$method} should exist on instance"
             );
         }
     }
 
-    public function test_constructor_with_all_fields(): void
+    public function testConstructorWithAllFields(): void
     {
         $responseData = (object) [
             'code' => '10000',
@@ -186,7 +193,7 @@ class AlipayUserInfoShareResponseTest extends TestCase
             'province' => '浙江省',
             'city' => '杭州市',
             'nick_name' => '测试用户',
-            'gender' => 'M'
+            'gender' => 'M',
         ];
 
         $response = new AlipayUserInfoShareResponse($responseData);
@@ -204,18 +211,17 @@ class AlipayUserInfoShareResponseTest extends TestCase
         $this->assertSame(AlipayUserGender::MALE, $response->getGender());
     }
 
-    public function test_constructor_accepts_stdclass(): void
+    public function testConstructorAcceptsStdclass(): void
     {
         $responseData = new \stdClass();
         $responseData->code = '10000';
 
         $response = new AlipayUserInfoShareResponse($responseData);
 
-        $this->assertInstanceOf(AlipayUserInfoShareResponse::class, $response);
         $this->assertTrue($response->isSuccess());
     }
 
-    public function test_response_immutability(): void
+    public function testResponseImmutability(): void
     {
         $responseData = (object) ['code' => '10000'];
         $response = new AlipayUserInfoShareResponse($responseData);
@@ -224,19 +230,19 @@ class AlipayUserInfoShareResponseTest extends TestCase
         $reflection = new \ReflectionClass($response);
         $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
 
-        $setterMethods = array_filter($methods, function($method) {
+        $setterMethods = array_filter($methods, function (\ReflectionMethod $method) {
             return str_starts_with($method->getName(), 'set');
         });
 
         $this->assertEmpty($setterMethods, 'Response should be immutable - no setter methods allowed');
     }
 
-    public function test_constructor_parameter_type(): void
+    public function testConstructorParameterType(): void
     {
         $reflection = new \ReflectionClass(AlipayUserInfoShareResponse::class);
         $constructor = $reflection->getConstructor();
+        $this->assertNotNull($constructor, 'Constructor must exist');
 
-        $this->assertNotNull($constructor);
         $parameters = $constructor->getParameters();
         $this->assertCount(1, $parameters);
 
@@ -247,7 +253,7 @@ class AlipayUserInfoShareResponseTest extends TestCase
         $this->assertSame('stdClass', $type->getName());
     }
 
-    public function test_gender_enum_integration(): void
+    public function testGenderEnumIntegration(): void
     {
         $maleResponse = (object) ['gender' => 'M'];
         $femaleResponse = (object) ['gender' => 'F'];
@@ -258,4 +264,4 @@ class AlipayUserInfoShareResponseTest extends TestCase
         $this->assertSame(AlipayUserGender::MALE, $maleResult->getGender());
         $this->assertSame(AlipayUserGender::FEMALE, $femaleResult->getGender());
     }
-} 
+}

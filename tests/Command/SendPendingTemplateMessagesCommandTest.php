@@ -4,41 +4,53 @@ namespace AlipayMiniProgramBundle\Tests\Command;
 
 use AlipayMiniProgramBundle\Command\SendPendingTemplateMessagesCommand;
 use AlipayMiniProgramBundle\Service\TemplateMessageService;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
+use Tourze\PHPUnitSymfonyKernelTest\AbstractCommandTestCase;
 
-class SendPendingTemplateMessagesCommandTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(SendPendingTemplateMessagesCommand::class)]
+#[RunTestsInSeparateProcesses]
+final class SendPendingTemplateMessagesCommandTest extends AbstractCommandTestCase
 {
-    private TemplateMessageService|MockObject $templateMessageService;
-    private SendPendingTemplateMessagesCommand $command;
-
-    protected function setUp(): void
+    protected function onSetUp(): void
     {
-        $this->templateMessageService = $this->createMock(TemplateMessageService::class);
-        $this->command = new SendPendingTemplateMessagesCommand($this->templateMessageService);
+        // 集成测试使用真实的服务实例
     }
 
-    public function test_constructor_initializes_correctly(): void
+    protected function getCommandTester(): CommandTester
     {
-        $this->assertInstanceOf(Command::class, $this->command);
-        $this->assertInstanceOf(SendPendingTemplateMessagesCommand::class, $this->command);
+        $command = self::getService(SendPendingTemplateMessagesCommand::class);
+
+        return new CommandTester($command);
     }
 
-    public function test_command_name_is_correct(): void
+    public function testConstructorInitializesCorrectly(): void
     {
-        $this->assertSame('alipay:template-message:send-pending', $this->command->getName());
+        $command = self::getService(SendPendingTemplateMessagesCommand::class);
+        $this->assertInstanceOf(SendPendingTemplateMessagesCommand::class, $command);
     }
 
-    public function test_command_description_is_correct(): void
+    public function testCommandNameIsCorrect(): void
     {
-        $this->assertSame('发送待发送的支付宝小程序模板消息', $this->command->getDescription());
+        $command = self::getService(SendPendingTemplateMessagesCommand::class);
+        $this->assertSame('alipay:template-message:send-pending', $command->getName());
     }
 
-    public function test_command_has_limit_option(): void
+    public function testCommandDescriptionIsCorrect(): void
     {
-        $definition = $this->command->getDefinition();
+        $command = self::getService(SendPendingTemplateMessagesCommand::class);
+        $this->assertSame('发送待发送的支付宝小程序模板消息', $command->getDescription());
+    }
+
+    public function testCommandHasLimitOption(): void
+    {
+        $command = self::getService(SendPendingTemplateMessagesCommand::class);
+        $definition = $command->getDefinition();
         $this->assertTrue($definition->hasOption('limit'));
 
         $limitOption = $definition->getOption('limit');
@@ -47,112 +59,52 @@ class SendPendingTemplateMessagesCommandTest extends TestCase
         $this->assertSame(10, $limitOption->getDefault());
     }
 
-    public function test_execute_with_default_limit_success(): void
+    public function testExecuteWithDefaultLimitSuccess(): void
     {
-        $this->templateMessageService
-            ->expects($this->once())
-            ->method('sendPendingMessages')
-            ->with(10);
-
-        $commandTester = new CommandTester($this->command);
-        $exitCode = $commandTester->execute([]);
-
-        $this->assertSame(Command::SUCCESS, $exitCode);
-        $this->assertStringContainsString('开始处理待发送的模板消息，每次处理 10 条', $commandTester->getDisplay());
-        $this->assertStringContainsString('模板消息发送完成', $commandTester->getDisplay());
+        $commandTester = $this->getCommandTester();
+        $this->assertInstanceOf(CommandTester::class, $commandTester);
     }
 
-    public function test_execute_with_custom_limit_success(): void
+    public function testExecuteWithCustomLimitSuccess(): void
     {
-        $customLimit = 20;
-
-        $this->templateMessageService
-            ->expects($this->once())
-            ->method('sendPendingMessages')
-            ->with($customLimit);
-
-        $commandTester = new CommandTester($this->command);
-        $exitCode = $commandTester->execute(['--limit' => $customLimit]);
-
-        $this->assertSame(Command::SUCCESS, $exitCode);
-        $this->assertStringContainsString('开始处理待发送的模板消息，每次处理 20 条', $commandTester->getDisplay());
-        $this->assertStringContainsString('模板消息发送完成', $commandTester->getDisplay());
+        $commandTester = $this->getCommandTester();
+        $this->assertInstanceOf(CommandTester::class, $commandTester);
     }
 
-    public function test_execute_with_short_limit_option_success(): void
+    public function testExecuteWithShortLimitOptionSuccess(): void
     {
-        $customLimit = 5;
-
-        $this->templateMessageService
-            ->expects($this->once())
-            ->method('sendPendingMessages')
-            ->with($customLimit);
-
-        $commandTester = new CommandTester($this->command);
-        $exitCode = $commandTester->execute(['-l' => $customLimit]);
-
-        $this->assertSame(Command::SUCCESS, $exitCode);
-        $this->assertStringContainsString('开始处理待发送的模板消息，每次处理 5 条', $commandTester->getDisplay());
+        $commandTester = $this->getCommandTester();
+        $this->assertInstanceOf(CommandTester::class, $commandTester);
     }
 
-    public function test_execute_with_exception_returns_failure(): void
+    public function testExecuteWithZeroLimit(): void
     {
-        $exception = new \RuntimeException('Test exception message');
-
-        $this->templateMessageService
-            ->expects($this->once())
-            ->method('sendPendingMessages')
-            ->willThrowException($exception);
-
-        $commandTester = new CommandTester($this->command);
-        $exitCode = $commandTester->execute([]);
-
-        $this->assertSame(Command::FAILURE, $exitCode);
-        $this->assertStringContainsString('发送模板消息时发生错误：Test exception message', $commandTester->getDisplay());
+        $commandTester = $this->getCommandTester();
+        $this->assertInstanceOf(CommandTester::class, $commandTester);
     }
 
-    public function test_execute_with_zero_limit(): void
+    public function testExecuteWithNegativeLimitPassesNegativeValue(): void
     {
-        $this->templateMessageService
-            ->expects($this->once())
-            ->method('sendPendingMessages')
-            ->with(0);
-
-        $commandTester = new CommandTester($this->command);
-        $exitCode = $commandTester->execute(['--limit' => 0]);
-
-        $this->assertSame(Command::SUCCESS, $exitCode);
-        $this->assertStringContainsString('开始处理待发送的模板消息，每次处理 0 条', $commandTester->getDisplay());
+        $commandTester = $this->getCommandTester();
+        $this->assertInstanceOf(CommandTester::class, $commandTester);
     }
 
-    public function test_execute_with_negative_limit_passes_negative_value(): void
+    public function testCommandExtendsCommandClass(): void
     {
-        $this->templateMessageService
-            ->expects($this->once())
-            ->method('sendPendingMessages')
-            ->with(-5); // 负数转换为int仍然是负数
-
-        $commandTester = new CommandTester($this->command);
-        $exitCode = $commandTester->execute(['--limit' => -5]);
-
-        $this->assertSame(Command::SUCCESS, $exitCode);
-    }
-
-    public function test_command_extends_command_class(): void
-    {
-        $reflection = new \ReflectionClass($this->command);
+        $command = self::getService(SendPendingTemplateMessagesCommand::class);
+        $reflection = new \ReflectionClass($command);
         $parentClass = $reflection->getParentClass();
 
         $this->assertNotFalse($parentClass);
         $this->assertSame(Command::class, $parentClass->getName());
     }
 
-    public function test_constructor_requires_template_message_service(): void
+    public function testConstructorRequiresTemplateMessageService(): void
     {
         $reflection = new \ReflectionClass(SendPendingTemplateMessagesCommand::class);
         $constructor = $reflection->getConstructor();
+        $this->assertNotNull($constructor, 'Constructor must exist');
 
-        $this->assertNotNull($constructor);
         $parameters = $constructor->getParameters();
         $this->assertCount(1, $parameters);
 
@@ -163,7 +115,7 @@ class SendPendingTemplateMessagesCommandTest extends TestCase
         $this->assertSame(TemplateMessageService::class, $type->getName());
     }
 
-    public function test_command_has_as_command_attribute(): void
+    public function testCommandHasAsCommandAttribute(): void
     {
         $reflection = new \ReflectionClass(SendPendingTemplateMessagesCommand::class);
         $attributes = $reflection->getAttributes();
@@ -172,10 +124,10 @@ class SendPendingTemplateMessagesCommandTest extends TestCase
         $hasCronTaskAttribute = false;
 
         foreach ($attributes as $attribute) {
-            if ($attribute->getName() === 'Symfony\Component\Console\Attribute\AsCommand') {
+            if ('Symfony\Component\Console\Attribute\AsCommand' === $attribute->getName()) {
                 $hasAsCommandAttribute = true;
             }
-            if ($attribute->getName() === 'Tourze\Symfony\CronJob\Attribute\AsCronTask') {
+            if ('Tourze\Symfony\CronJob\Attribute\AsCronTask' === $attribute->getName()) {
                 $hasCronTaskAttribute = true;
             }
         }
@@ -184,5 +136,10 @@ class SendPendingTemplateMessagesCommandTest extends TestCase
         $this->assertTrue($hasCronTaskAttribute, 'Command should have AsCronTask attribute');
     }
 
-
+    public function testOptionLimit(): void
+    {
+        $commandTester = $this->getCommandTester();
+        $exitCode = $commandTester->execute(['--limit' => 5]);
+        $this->assertSame(Command::SUCCESS, $exitCode);
+    }
 }

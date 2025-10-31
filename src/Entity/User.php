@@ -9,6 +9,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
@@ -16,34 +17,45 @@ use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 #[AsEntityListener]
 class User implements \Stringable
 {
+    use TimestampableAware;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
-    private ?int $id = 0;
+    private int $id = 0;
 
     #[ORM\ManyToOne(targetEntity: MiniProgram::class)]
     #[ORM\JoinColumn(nullable: false, options: ['comment' => '关联的支付宝小程序'])]
     private MiniProgram $miniProgram;
 
     #[ORM\Column(length: 64, unique: true, options: ['comment' => '支付宝用户的 open_id'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 64)]
     private string $openId;
 
     #[ORM\Column(length: 64, nullable: true, options: ['comment' => '用户昵称'])]
+    #[Assert\Length(max: 64)]
     private ?string $nickName = null;
 
     #[ORM\Column(length: 255, nullable: true, options: ['comment' => '用户头像地址'])]
+    #[Assert\Length(max: 255)]
+    #[Assert\Url(message: '请输入有效的URL地址')]
     private ?string $avatar = null;
 
     #[ORM\Column(length: 32, nullable: true, options: ['comment' => '省份名称'])]
+    #[Assert\Length(max: 32)]
     private ?string $province = null;
 
     #[ORM\Column(length: 32, nullable: true, options: ['comment' => '城市名称'])]
+    #[Assert\Length(max: 32)]
     private ?string $city = null;
 
     #[ORM\Column(length: 8, enumType: AlipayUserGender::class, nullable: true, options: ['comment' => '用户性别'])]
+    #[Assert\Choice(callback: [AlipayUserGender::class, 'cases'])]
     private ?AlipayUserGender $gender = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '最后一次获取用户信息的时间'])]
+    #[Assert\Type(type: '\DateTimeImmutable')]
     private ?\DateTimeImmutable $lastInfoUpdateTime = null;
 
     /**
@@ -57,8 +69,6 @@ class User implements \Stringable
      */
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: AlipayUserPhone::class)]
     private Collection $userPhones;
-
-    use TimestampableAware;
 
     public function __construct()
     {
@@ -76,11 +86,9 @@ class User implements \Stringable
         return $this->miniProgram;
     }
 
-    public function setMiniProgram(MiniProgram $miniProgram): static
+    public function setMiniProgram(MiniProgram $miniProgram): void
     {
         $this->miniProgram = $miniProgram;
-
-        return $this;
     }
 
     public function getOpenId(): string
@@ -88,11 +96,9 @@ class User implements \Stringable
         return $this->openId;
     }
 
-    public function setOpenId(string $openId): static
+    public function setOpenId(string $openId): void
     {
         $this->openId = $openId;
-
-        return $this;
     }
 
     public function getNickName(): ?string
@@ -100,11 +106,9 @@ class User implements \Stringable
         return $this->nickName;
     }
 
-    public function setNickName(?string $nickName): static
+    public function setNickName(?string $nickName): void
     {
         $this->nickName = $nickName;
-
-        return $this;
     }
 
     public function getAvatar(): ?string
@@ -112,11 +116,9 @@ class User implements \Stringable
         return $this->avatar;
     }
 
-    public function setAvatar(?string $avatar): static
+    public function setAvatar(?string $avatar): void
     {
         $this->avatar = $avatar;
-
-        return $this;
     }
 
     public function getProvince(): ?string
@@ -124,11 +126,9 @@ class User implements \Stringable
         return $this->province;
     }
 
-    public function setProvince(?string $province): static
+    public function setProvince(?string $province): void
     {
         $this->province = $province;
-
-        return $this;
     }
 
     public function getCity(): ?string
@@ -136,11 +136,9 @@ class User implements \Stringable
         return $this->city;
     }
 
-    public function setCity(?string $city): static
+    public function setCity(?string $city): void
     {
         $this->city = $city;
-
-        return $this;
     }
 
     public function getGender(): ?AlipayUserGender
@@ -148,11 +146,9 @@ class User implements \Stringable
         return $this->gender;
     }
 
-    public function setGender(?AlipayUserGender $gender): static
+    public function setGender(?AlipayUserGender $gender): void
     {
         $this->gender = $gender;
-
-        return $this;
     }
 
     public function getLastInfoUpdateTime(): ?\DateTimeImmutable
@@ -160,13 +156,11 @@ class User implements \Stringable
         return $this->lastInfoUpdateTime;
     }
 
-    public function setLastInfoUpdateTime(?\DateTimeInterface $lastInfoUpdateTime): static
+    public function setLastInfoUpdateTime(?\DateTimeInterface $lastInfoUpdateTime): void
     {
-        $this->lastInfoUpdateTime = $lastInfoUpdateTime instanceof \DateTimeImmutable 
-            ? $lastInfoUpdateTime 
-            : ($lastInfoUpdateTime !== null ? \DateTimeImmutable::createFromInterface($lastInfoUpdateTime) : null);
-
-        return $this;
+        $this->lastInfoUpdateTime = $lastInfoUpdateTime instanceof \DateTimeImmutable
+            ? $lastInfoUpdateTime
+            : (null !== $lastInfoUpdateTime ? \DateTimeImmutable::createFromInterface($lastInfoUpdateTime) : null);
     }
 
     /**
@@ -177,31 +171,28 @@ class User implements \Stringable
         return $this->authCodes;
     }
 
-    public function addAuthCode(AuthCode $authCode): static
+    public function addAuthCode(AuthCode $authCode): void
     {
         if (!$this->authCodes->contains($authCode)) {
             $this->authCodes->add($authCode);
             $authCode->setAlipayUser($this);
         }
-
-        return $this;
     }
 
-    public function removeAuthCode(AuthCode $authCode): static
+    public function removeAuthCode(AuthCode $authCode): void
     {
         if ($this->authCodes->removeElement($authCode)) {
             if ($authCode->getAlipayUser() === $this) {
                 $authCode->setAlipayUser(null);
             }
         }
-
-        return $this;
     }
 
     public function getLatestAuthCode(): ?AuthCode
     {
         $lastAuthCode = $this->authCodes->last();
-        return $lastAuthCode !== false ? $lastAuthCode : null;
+
+        return false !== $lastAuthCode ? $lastAuthCode : null;
     }
 
     /**
@@ -212,32 +203,28 @@ class User implements \Stringable
         return $this->userPhones;
     }
 
-    public function addUserPhone(AlipayUserPhone $userPhone): static
+    public function addUserPhone(AlipayUserPhone $userPhone): void
     {
         if (!$this->userPhones->contains($userPhone)) {
             $this->userPhones->add($userPhone);
             $userPhone->setUser($this);
         }
-
-        return $this;
     }
 
-    public function removeUserPhone(AlipayUserPhone $userPhone): static
+    public function removeUserPhone(AlipayUserPhone $userPhone): void
     {
         if ($this->userPhones->removeElement($userPhone)) {
             if ($userPhone->getUser() === $this) {
                 $userPhone->setUser(null);
             }
         }
-
-        return $this;
     }
 
     public function getLatestPhone(): ?Phone
     {
         $latestUserPhone = $this->userPhones->last();
 
-        return $latestUserPhone ? $latestUserPhone->getPhone() : null;
+        return (false !== $latestUserPhone) ? $latestUserPhone->getPhone() : null;
     }
 
     public function __toString(): string

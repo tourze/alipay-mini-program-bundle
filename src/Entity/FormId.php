@@ -6,6 +6,7 @@ use AlipayMiniProgramBundle\Repository\FormIdRepository;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
@@ -15,11 +16,13 @@ use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 #[AsEntityListener]
 class FormId implements \Stringable
 {
+    use TimestampableAware;
+    use BlameableAware;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
-    private ?int $id = 0;
-
+    private int $id = 0;
 
     /**
      * 关联的小程序
@@ -36,35 +39,34 @@ class FormId implements \Stringable
     private ?User $user = null;
 
     #[ORM\Column(length: 64, options: ['comment' => 'formId'])]
+    #[Assert\NotNull]
+    #[Assert\Length(max: 64)]
     private ?string $formId = null;
 
     #[IndexColumn]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, options: ['comment' => '过期时间'])]
+    #[Assert\NotNull]
+    #[Assert\Type(type: '\DateTimeImmutable')]
     private ?\DateTimeImmutable $expireTime = null;
 
     #[IndexColumn]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => '使用次数，达到3次即视为已使用', 'default' => 0])]
+    #[Assert\Range(min: 0, max: 10)]
     private int $usedCount = 0;
-
-    use TimestampableAware;
-    use BlameableAware;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-
     public function getMiniProgram(): ?MiniProgram
     {
         return $this->miniProgram;
     }
 
-    public function setMiniProgram(?MiniProgram $miniProgram): static
+    public function setMiniProgram(?MiniProgram $miniProgram): void
     {
         $this->miniProgram = $miniProgram;
-
-        return $this;
     }
 
     public function getUser(): ?User
@@ -72,11 +74,9 @@ class FormId implements \Stringable
         return $this->user;
     }
 
-    public function setUser(?User $user): static
+    public function setUser(?User $user): void
     {
         $this->user = $user;
-
-        return $this;
     }
 
     public function getFormId(): ?string
@@ -84,11 +84,9 @@ class FormId implements \Stringable
         return $this->formId;
     }
 
-    public function setFormId(string $formId): static
+    public function setFormId(string $formId): void
     {
         $this->formId = $formId;
-
-        return $this;
     }
 
     public function getExpireTime(): ?\DateTimeImmutable
@@ -96,11 +94,9 @@ class FormId implements \Stringable
         return $this->expireTime;
     }
 
-    public function setExpireTime(\DateTimeInterface $expireTime): static
+    public function setExpireTime(\DateTimeInterface $expireTime): void
     {
         $this->expireTime = $expireTime instanceof \DateTimeImmutable ? $expireTime : \DateTimeImmutable::createFromInterface($expireTime);
-
-        return $this;
     }
 
     public function getUsedCount(): int
@@ -108,18 +104,14 @@ class FormId implements \Stringable
         return $this->usedCount;
     }
 
-    public function setUsedCount(int $usedCount): static
+    public function setUsedCount(int $usedCount): void
     {
         $this->usedCount = $usedCount;
-
-        return $this;
     }
 
-    public function incrementUsedCount(): static
+    public function incrementUsedCount(): void
     {
         ++$this->usedCount;
-
-        return $this;
     }
 
     public function isUsed(): bool

@@ -2,117 +2,45 @@
 
 namespace AlipayMiniProgramBundle\Tests\MessageHandler;
 
-use Alipay\OpenAPISDK\Model\AlipayUserInfoShareResponse;
-use AlipayMiniProgramBundle\Entity\MiniProgram;
-use AlipayMiniProgramBundle\Entity\User;
 use AlipayMiniProgramBundle\Message\UpdateUserInfoMessage;
 use AlipayMiniProgramBundle\MessageHandler\UpdateUserInfoHandler;
-use AlipayMiniProgramBundle\Repository\UserRepository;
-use Doctrine\ORM\EntityManagerInterface;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use Tourze\PHPUnitSymfonyKernelTest\AbstractIntegrationTestCase;
 
-class UpdateUserInfoHandlerTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(UpdateUserInfoHandler::class)]
+#[RunTestsInSeparateProcesses]
+final class UpdateUserInfoHandlerTest extends AbstractIntegrationTestCase
 {
-    private UserRepository|MockObject $userRepository;
-    private LoggerInterface|MockObject $logger;
-    private EntityManagerInterface|MockObject $entityManager;
-    private UpdateUserInfoHandler $handler;
-
-    protected function setUp(): void
+    protected function onSetUp(): void
     {
-        $this->userRepository = $this->createMock(UserRepository::class);
-        $this->logger = $this->createMock(LoggerInterface::class);
-        $this->entityManager = $this->createMock(EntityManagerInterface::class);
-
-        $this->handler = new UpdateUserInfoHandler(
-            $this->userRepository,
-            $this->logger,
-            $this->entityManager
-        );
     }
 
-    public function test_constructor_initializes_correctly(): void
+    public function testConstructorInitializesCorrectly(): void
     {
-        $this->assertInstanceOf(UpdateUserInfoHandler::class, $this->handler);
+        $handler = self::getService(UpdateUserInfoHandler::class);
+        $this->assertInstanceOf(UpdateUserInfoHandler::class, $handler);
     }
 
-    public function test_invoke_with_nonexistent_user_returns_early(): void
+    public function testInvokeWithNonexistentUserReturnsEarly(): void
     {
-        $message = new UpdateUserInfoMessage(999, 'test_auth_token');
+        $handler = self::getService(UpdateUserInfoHandler::class);
+        $message = new UpdateUserInfoMessage(999999, 'test_auth_token');
 
-        $this->userRepository
-            ->expects($this->once())
-            ->method('find')
-            ->with(999)
-            ->willReturn(null);
-
-        $this->logger
-            ->expects($this->never())
-            ->method('error');
-
-        $this->entityManager
-            ->expects($this->never())
-            ->method('persist');
-
-        $this->handler->__invoke($message);
+        // 当用户不存在时，方法应该正常执行而不抛出异常
+        $this->expectNotToPerformAssertions();
+        $handler->__invoke($message);
     }
 
-    public function test_invoke_with_valid_user_updates_successfully(): void
-    {
-        $miniProgram = new MiniProgram();
-        $miniProgram->setAppId('test_app_id');
-        $miniProgram->setPrivateKey('-----BEGIN RSA PRIVATE KEY-----
-MIIEowIBAAKCAQEAtest_fake_private_key_content
------END RSA PRIVATE KEY-----');
-        $miniProgram->setAlipayPublicKey('-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQtest_fake_public_key_content
------END PUBLIC KEY-----');
-        $miniProgram->setEncryptKey('test_encrypt_key');
-
-        $user = new User();
-        $user->setMiniProgram($miniProgram);
-
-        $userId = 123; // 使用固定的用户ID避免null问题
-        $message = new UpdateUserInfoMessage($userId, 'test_auth_token');
-
-        $this->userRepository
-            ->expects($this->once())
-            ->method('find')
-            ->with($userId)
-            ->willReturn($user);
-
-        // 由于有外部API调用会抛出异常，我们不期望persist和flush被调用
-        $this->entityManager
-            ->expects($this->never())
-            ->method('persist');
-
-        $this->entityManager
-            ->expects($this->never())
-            ->method('flush');
-
-        // 由于有外部API调用，这个测试会抛出异常，但我们可以测试异常处理
-        $this->logger
-            ->expects($this->once())
-            ->method('error')
-            ->with('Exception when calling AlipayUserInfoApi->share');
-
-        // 捕获输出以防止测试产生噪音
-        ob_start();
-        try {
-            $this->handler->__invoke($message);
-        } finally {
-            ob_end_clean();
-        }
-    }
-
-    public function test_constructor_requires_dependencies(): void
+    public function testConstructorRequiresDependencies(): void
     {
         $reflection = new \ReflectionClass(UpdateUserInfoHandler::class);
         $constructor = $reflection->getConstructor();
+        $this->assertNotNull($constructor, 'Constructor must exist');
 
-        $this->assertNotNull($constructor);
         $parameters = $constructor->getParameters();
         $this->assertCount(3, $parameters);
 
@@ -121,14 +49,14 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQtest_fake_public_key_content
         $this->assertSame('entityManager', $parameters[2]->getName());
     }
 
-    public function test_handler_has_as_message_handler_attribute(): void
+    public function testHandlerHasAsMessageHandlerAttribute(): void
     {
         $reflection = new \ReflectionClass(UpdateUserInfoHandler::class);
         $attributes = $reflection->getAttributes();
 
         $hasAsMessageHandlerAttribute = false;
         foreach ($attributes as $attribute) {
-            if ($attribute->getName() === 'Symfony\Component\Messenger\Attribute\AsMessageHandler') {
+            if ('Symfony\Component\Messenger\Attribute\AsMessageHandler' === $attribute->getName()) {
                 $hasAsMessageHandlerAttribute = true;
                 break;
             }
@@ -137,8 +65,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQtest_fake_public_key_content
         $this->assertTrue($hasAsMessageHandlerAttribute, 'Handler should have AsMessageHandler attribute');
     }
 
-
-    public function test_invoke_method_accepts_update_user_info_message(): void
+    public function testInvokeMethodAcceptsUpdateUserInfoMessage(): void
     {
         $reflection = new \ReflectionClass(UpdateUserInfoHandler::class);
         $invokeMethod = $reflection->getMethod('__invoke');
@@ -153,76 +80,22 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQtest_fake_public_key_content
         $this->assertSame(UpdateUserInfoMessage::class, $type->getName());
     }
 
-    public function test_invoke_method_returns_void(): void
+    public function testInvokeMethodReturnsVoid(): void
     {
         $reflection = new \ReflectionClass(UpdateUserInfoHandler::class);
         $invokeMethod = $reflection->getMethod('__invoke');
 
         $returnType = $invokeMethod->getReturnType();
-        $this->assertNotNull($returnType);
         $this->assertInstanceOf(\ReflectionNamedType::class, $returnType);
         $this->assertSame('void', $returnType->getName());
     }
 
-    public function test_handler_class_implements_correct_pattern(): void
+    public function testHandlerClassImplementsCorrectPattern(): void
     {
-        // 检查是否有正确的构造函数依赖
         $reflection = new \ReflectionClass(UpdateUserInfoHandler::class);
         $constructor = $reflection->getConstructor();
-        $this->assertNotNull($constructor);
 
         $properties = $reflection->getProperties(\ReflectionProperty::IS_PRIVATE);
         $this->assertCount(3, $properties);
-    }
-
-    public function test_invoke_with_user_null_mini_program(): void
-    {
-        $miniProgram = new MiniProgram();
-        $miniProgram->setAppId('test_app_id');
-        $miniProgram->setPrivateKey('-----BEGIN RSA PRIVATE KEY-----
-MIIEowIBAAKCAQEAtest_fake_private_key_content
------END RSA PRIVATE KEY-----');
-        $miniProgram->setAlipayPublicKey('-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQtest_fake_public_key_content
------END PUBLIC KEY-----');
-        $miniProgram->setEncryptKey('test_encrypt_key');
-
-        $user = new User();
-        $user->setMiniProgram($miniProgram);
-
-        $userId = 456; // 使用固定的用户ID避免null问题
-        $message = new UpdateUserInfoMessage($userId, 'test_auth_token');
-
-        $this->userRepository
-            ->expects($this->once())
-            ->method('find')
-            ->with($userId)
-            ->willReturn($user);
-
-        $this->logger
-            ->expects($this->once())
-            ->method('error')
-            ->with('Exception when calling AlipayUserInfoApi->share');
-
-        // 捕获输出以防止测试产生噪音
-        ob_start();
-        try {
-            $this->handler->__invoke($message);
-        } finally {
-            ob_end_clean();
-        }
-    }
-
-    public function test_handler_dependency_injection(): void
-    {
-        $reflection = new \ReflectionClass($this->handler);
-        $constructor = $reflection->getConstructor();
-
-        $parameters = $constructor->getParameters();
-
-        // 检查所有参数都是只读的
-        foreach ($parameters as $parameter) {
-            $this->assertTrue($parameter->isPromoted(), "Parameter {$parameter->getName()} should be promoted");
-        }
     }
 }

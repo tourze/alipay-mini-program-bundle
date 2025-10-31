@@ -3,80 +3,69 @@
 namespace AlipayMiniProgramBundle\Tests\Entity;
 
 use AlipayMiniProgramBundle\Entity\AlipayUserPhone;
-use AlipayMiniProgramBundle\Entity\Phone;
-use AlipayMiniProgramBundle\Entity\User;
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use Tourze\PHPUnitDoctrineEntity\AbstractEntityTestCase;
 
-class AlipayUserPhoneTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(AlipayUserPhone::class)]
+final class AlipayUserPhoneTest extends AbstractEntityTestCase
 {
-    public function testGettersAndSetters(): void
+    protected function createEntity(): object
     {
-        // Arrange
-        $userPhone = new AlipayUserPhone();
-        $user = $this->createMock(User::class);
-        $phone = $this->createMock(Phone::class);
-        $verifiedTime = new \DateTimeImmutable();
-        $createTime = new \DateTimeImmutable();
-        $updateTime = new \DateTimeImmutable();
-
-        // Act & Assert
-        $this->assertEquals(0, $userPhone->getId());
-
-        $userPhone->setUser($user);
-        $this->assertSame($user, $userPhone->getUser());
-
-        $userPhone->setPhone($phone);
-        $this->assertSame($phone, $userPhone->getPhone());
-
-        $userPhone->setVerifiedTime($verifiedTime);
-        $this->assertSame($verifiedTime, $userPhone->getVerifiedTime());
-
-        $userPhone->setCreateTime($createTime);
-        $this->assertSame($createTime, $userPhone->getCreateTime());
-
-        $userPhone->setUpdateTime($updateTime);
-        $this->assertSame($updateTime, $userPhone->getUpdateTime());
+        return new AlipayUserPhone();
     }
 
-    public function testSetVerifiedTime_withDateTime(): void
+    /**
+     * @return iterable<string, array{string, mixed}>
+     */
+    public static function propertiesProvider(): iterable
+    {
+        return [
+            'verifiedTime' => ['verifiedTime', new \DateTimeImmutable()],
+        ];
+    }
+
+    public function testSetVerifiedTimeWithDateTime(): void
     {
         // Arrange
         $userPhone = new AlipayUserPhone();
         $verifiedTime = new \DateTime('2023-12-01 10:30:00');
 
         // Act
-        $result = $userPhone->setVerifiedTime($verifiedTime);
+        $userPhone->setVerifiedTime($verifiedTime);
 
         // Assert
-        $this->assertSame($userPhone, $result); // Test fluent interface
+
         $retrievedTime = $userPhone->getVerifiedTime();
         $this->assertInstanceOf(\DateTimeImmutable::class, $retrievedTime);
         $this->assertEquals($verifiedTime->format('Y-m-d H:i:s'), $retrievedTime->format('Y-m-d H:i:s'));
     }
 
-    public function testSetUser_withNullValue(): void
+    public function testSetUserWithNullValue(): void
     {
         // Arrange
         $userPhone = new AlipayUserPhone();
 
         // Act
-        $result = $userPhone->setUser(null);
+        $userPhone->setUser(null);
 
         // Assert
-        $this->assertSame($userPhone, $result); // Test fluent interface
+
         $this->assertNull($userPhone->getUser());
     }
 
-    public function testSetPhone_withNullValue(): void
+    public function testSetPhoneWithNullValue(): void
     {
         // Arrange
         $userPhone = new AlipayUserPhone();
 
         // Act
-        $result = $userPhone->setPhone(null);
+        $userPhone->setPhone(null);
 
         // Assert
-        $this->assertSame($userPhone, $result); // Test fluent interface
+
         $this->assertNull($userPhone->getPhone());
     }
 }

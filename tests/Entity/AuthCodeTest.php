@@ -3,113 +3,57 @@
 namespace AlipayMiniProgramBundle\Tests\Entity;
 
 use AlipayMiniProgramBundle\Entity\AuthCode;
-use AlipayMiniProgramBundle\Entity\User;
 use AlipayMiniProgramBundle\Enum\AlipayAuthScope;
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use Tourze\PHPUnitDoctrineEntity\AbstractEntityTestCase;
 
-class AuthCodeTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(AuthCode::class)]
+final class AuthCodeTest extends AbstractEntityTestCase
 {
-    public function testGettersAndSetters(): void
+    protected function createEntity(): object
     {
-        // Arrange
-        $authCode = new AuthCode();
-        $user = new User();
-        $authStart = new \DateTimeImmutable();
-        $createTime = new \DateTimeImmutable();
-        $updateTime = new \DateTimeImmutable();
-
-        // Act & Assert
-        $this->assertEquals(0, $authCode->getId());
-
-        $authCode->setAlipayUser($user);
-        $this->assertSame($user, $authCode->getAlipayUser());
-
-        $authCode->setAuthCode('test_auth_code_123');
-        $this->assertEquals('test_auth_code_123', $authCode->getAuthCode());
-
-        $authCode->setScope(AlipayAuthScope::AUTH_USER);
-        $this->assertEquals(AlipayAuthScope::AUTH_USER, $authCode->getScope());
-
-        $authCode->setState('test_state');
-        $this->assertEquals('test_state', $authCode->getState());
-
-        $authCode->setUserId('test_user_id');
-        $this->assertEquals('test_user_id', $authCode->getUserId());
-
-        $authCode->setOpenId('test_open_id');
-        $this->assertEquals('test_open_id', $authCode->getOpenId());
-
-        $authCode->setAccessToken('test_access_token');
-        $this->assertEquals('test_access_token', $authCode->getAccessToken());
-
-        $authCode->setRefreshToken('test_refresh_token');
-        $this->assertEquals('test_refresh_token', $authCode->getRefreshToken());
-
-        $authCode->setExpiresIn(7200);
-        $this->assertEquals(7200, $authCode->getExpiresIn());
-
-        $authCode->setReExpiresIn(2592000);
-        $this->assertEquals(2592000, $authCode->getReExpiresIn());
-
-        $authCode->setAuthStart($authStart);
-        $this->assertSame($authStart, $authCode->getAuthStart());
-
-        $authCode->setSign('test_sign');
-        $this->assertEquals('test_sign', $authCode->getSign());
-
-        $authCode->setCreatedFromIp('192.168.1.1');
-        $this->assertEquals('192.168.1.1', $authCode->getCreatedFromIp());
-
-        $authCode->setUpdatedFromIp('192.168.1.2');
-        $this->assertEquals('192.168.1.2', $authCode->getUpdatedFromIp());
-
-        $authCode->setCreateTime($createTime);
-        $this->assertSame($createTime, $authCode->getCreateTime());
-
-        $authCode->setUpdateTime($updateTime);
-        $this->assertSame($updateTime, $authCode->getUpdateTime());
+        return new AuthCode();
     }
 
-    public function testSetAlipayUser_withNullValue(): void
+    /**
+     * @return iterable<string, array{string, mixed}>
+     */
+    public static function propertiesProvider(): iterable
+    {
+        $authStart = new \DateTimeImmutable();
+
+        return [
+            'authCode' => ['authCode', 'test_auth_code_123'],
+            'scope' => ['scope', AlipayAuthScope::AUTH_USER],
+            'state' => ['state', 'test_state'],
+            'userId' => ['userId', 'test_user_id'],
+            'openId' => ['openId', 'test_open_id'],
+            'accessToken' => ['accessToken', 'test_access_token'],
+            'refreshToken' => ['refreshToken', 'test_refresh_token'],
+            'expiresIn' => ['expiresIn', 7200],
+            'reExpiresIn' => ['reExpiresIn', 2592000],
+            'authStart' => ['authStart', $authStart],
+            'sign' => ['sign', 'test_sign'],
+        ];
+    }
+
+    public function testSetAlipayUserWithNullValue(): void
     {
         // Arrange
         $authCode = new AuthCode();
 
         // Act
-        $result = $authCode->setAlipayUser(null);
+        $authCode->setAlipayUser(null);
 
         // Assert
-        $this->assertSame($authCode, $result); // Test fluent interface
+
         $this->assertNull($authCode->getAlipayUser());
     }
 
-    public function testSetState_withNullValue(): void
-    {
-        // Arrange
-        $authCode = new AuthCode();
-
-        // Act
-        $result = $authCode->setState(null);
-
-        // Assert
-        $this->assertSame($authCode, $result); // Test fluent interface
-        $this->assertNull($authCode->getState());
-    }
-
-    public function testSetSign_withNullValue(): void
-    {
-        // Arrange
-        $authCode = new AuthCode();
-
-        // Act
-        $result = $authCode->setSign(null);
-
-        // Assert
-        $this->assertSame($authCode, $result); // Test fluent interface
-        $this->assertNull($authCode->getSign());
-    }
-
-    public function testScope_withAllValues(): void
+    public function testScopeWithAllValues(): void
     {
         // Arrange
         $authCode = new AuthCode();
@@ -121,28 +65,5 @@ class AuthCodeTest extends TestCase
         // Test AUTH_USER
         $authCode->setScope(AlipayAuthScope::AUTH_USER);
         $this->assertEquals(AlipayAuthScope::AUTH_USER, $authCode->getScope());
-    }
-
-    public function testFluentInterface(): void
-    {
-        // Arrange
-        $authCode = new AuthCode();
-        $user = new User();
-
-        // Act & Assert - Test that all setters return the entity instance
-        $this->assertSame($authCode, $authCode->setAlipayUser($user));
-        $this->assertSame($authCode, $authCode->setAuthCode('test'));
-        $this->assertSame($authCode, $authCode->setScope(AlipayAuthScope::AUTH_BASE));
-        $this->assertSame($authCode, $authCode->setState('test'));
-        $this->assertSame($authCode, $authCode->setUserId('test'));
-        $this->assertSame($authCode, $authCode->setOpenId('test'));
-        $this->assertSame($authCode, $authCode->setAccessToken('test'));
-        $this->assertSame($authCode, $authCode->setRefreshToken('test'));
-        $this->assertSame($authCode, $authCode->setExpiresIn(3600));
-        $this->assertSame($authCode, $authCode->setReExpiresIn(86400));
-        $this->assertSame($authCode, $authCode->setAuthStart(new \DateTimeImmutable()));
-        $this->assertSame($authCode, $authCode->setSign('test'));
-        $this->assertSame($authCode, $authCode->setCreatedFromIp('127.0.0.1'));
-        $this->assertSame($authCode, $authCode->setUpdatedFromIp('127.0.0.1'));
     }
 }

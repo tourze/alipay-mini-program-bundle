@@ -5,15 +5,12 @@ namespace AlipayMiniProgramBundle\Repository;
 use AlipayMiniProgramBundle\Entity\Phone;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Tourze\PHPUnitSymfonyKernelTest\Attribute\AsRepository;
 
 /**
  * @extends ServiceEntityRepository<Phone>
- *
- * @method Phone|null find($id, $lockMode = null, $lockVersion = null)
- * @method Phone|null findOneBy(array $criteria, array $orderBy = null)
- * @method Phone[]    findAll()
- * @method Phone[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
+#[AsRepository(entityClass: Phone::class)]
 class PhoneRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -24,5 +21,23 @@ class PhoneRepository extends ServiceEntityRepository
     public function findByNumber(string $number): ?Phone
     {
         return $this->findOneBy(['number' => $number]);
+    }
+
+    public function save(Phone $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function remove(Phone $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->remove($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
     }
 }

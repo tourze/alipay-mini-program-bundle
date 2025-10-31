@@ -6,6 +6,7 @@ use AlipayMiniProgramBundle\Repository\TemplateMessageRepository;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 
@@ -14,11 +15,13 @@ use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 #[AsEntityListener]
 class TemplateMessage implements \Stringable
 {
+    use TimestampableAware;
+    use BlameableAware;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
-    private ?int $id = 0;
-
+    private int $id = 0;
 
     #[ORM\ManyToOne(targetEntity: MiniProgram::class)]
     #[ORM\JoinColumn(nullable: false)]
@@ -29,45 +32,51 @@ class TemplateMessage implements \Stringable
     private User $toUser;
 
     #[ORM\Column(type: Types::STRING, length: 100, options: ['comment' => '模板ID'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 100)]
     private string $templateId;
 
     #[ORM\Column(type: Types::STRING, length: 100, options: ['comment' => '接收者的openId'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 100)]
     private string $toOpenId;
 
     #[ORM\Column(type: Types::STRING, length: 100, nullable: true, options: ['comment' => '页面路径'])]
+    #[Assert\Length(max: 100)]
     private ?string $page = null;
 
+    /**
+     * @var array<string, mixed>
+     */
     #[ORM\Column(type: Types::JSON, options: ['comment' => '模板数据'])]
+    #[Assert\Type(type: 'array')]
     private array $data = [];
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['comment' => '是否已发送', 'default' => false])]
+    #[Assert\Type(type: 'bool')]
     private bool $isSent = false;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '发送时间'])]
+    #[Assert\Type(type: '\DateTimeImmutable')]
     private ?\DateTimeImmutable $sentTime = null;
 
     #[ORM\Column(type: Types::STRING, length: 100, nullable: true, options: ['comment' => '发送结果'])]
+    #[Assert\Length(max: 100)]
     private ?string $sendResult = null;
-
-    use TimestampableAware;
-    use BlameableAware;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-
     public function getMiniProgram(): MiniProgram
     {
         return $this->miniProgram;
     }
 
-    public function setMiniProgram(MiniProgram $miniProgram): self
+    public function setMiniProgram(MiniProgram $miniProgram): void
     {
         $this->miniProgram = $miniProgram;
-
-        return $this;
     }
 
     public function getToUser(): User
@@ -75,11 +84,9 @@ class TemplateMessage implements \Stringable
         return $this->toUser;
     }
 
-    public function setToUser(User $toUser): self
+    public function setToUser(User $toUser): void
     {
         $this->toUser = $toUser;
-
-        return $this;
     }
 
     public function getTemplateId(): string
@@ -87,11 +94,9 @@ class TemplateMessage implements \Stringable
         return $this->templateId;
     }
 
-    public function setTemplateId(string $templateId): self
+    public function setTemplateId(string $templateId): void
     {
         $this->templateId = $templateId;
-
-        return $this;
     }
 
     public function getPage(): ?string
@@ -99,23 +104,25 @@ class TemplateMessage implements \Stringable
         return $this->page;
     }
 
-    public function setPage(?string $page): self
+    public function setPage(?string $page): void
     {
         $this->page = $page;
-
-        return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getData(): array
     {
         return $this->data;
     }
 
-    public function setData(array $data): self
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function setData(array $data): void
     {
         $this->data = $data;
-
-        return $this;
     }
 
     public function isSent(): bool
@@ -123,11 +130,9 @@ class TemplateMessage implements \Stringable
         return $this->isSent;
     }
 
-    public function setIsSent(bool $isSent): self
+    public function setIsSent(bool $isSent): void
     {
         $this->isSent = $isSent;
-
-        return $this;
     }
 
     public function getSentTime(): ?\DateTimeImmutable
@@ -135,11 +140,9 @@ class TemplateMessage implements \Stringable
         return $this->sentTime;
     }
 
-    public function setSentTime(?\DateTimeImmutable $sentTime): self
+    public function setSentTime(?\DateTimeImmutable $sentTime): void
     {
         $this->sentTime = $sentTime;
-
-        return $this;
     }
 
     public function getSendResult(): ?string
@@ -147,11 +150,9 @@ class TemplateMessage implements \Stringable
         return $this->sendResult;
     }
 
-    public function setSendResult(?string $sendResult): self
+    public function setSendResult(?string $sendResult): void
     {
         $this->sendResult = $sendResult;
-
-        return $this;
     }
 
     public function getToOpenId(): string
@@ -159,11 +160,19 @@ class TemplateMessage implements \Stringable
         return $this->toOpenId;
     }
 
-    public function setToOpenId(string $toOpenId): self
+    public function setToOpenId(string $toOpenId): void
     {
         $this->toOpenId = $toOpenId;
+    }
 
-        return $this;
+    /**
+     * 获取模板数据预览（虚拟字段，用于EasyAdmin显示）
+     */
+    public function getDataPreview(): string
+    {
+        $jsonResult = json_encode($this->data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+
+        return false !== $jsonResult ? $jsonResult : '';
     }
 
     public function __toString(): string

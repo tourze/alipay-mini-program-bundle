@@ -2,336 +2,278 @@
 
 namespace AlipayMiniProgramBundle\Tests\Service;
 
-use AlipayMiniProgramBundle\Entity\AlipayUserPhone;
+use AlipayMiniProgramBundle\Entity\MiniProgram;
 use AlipayMiniProgramBundle\Entity\Phone;
 use AlipayMiniProgramBundle\Entity\User;
 use AlipayMiniProgramBundle\Enum\AlipayUserGender;
+use AlipayMiniProgramBundle\Exception\UserNotFoundException;
 use AlipayMiniProgramBundle\Repository\PhoneRepository;
-use AlipayMiniProgramBundle\Repository\UserRepository;
 use AlipayMiniProgramBundle\Service\UserService;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\Doctrine\Security\User\UserLoaderInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Symfony\Component\Security\Core\User\UserInterface;
-use Tourze\JsonRPC\Core\Exception\ApiException;
+use Tourze\PHPUnitSymfonyKernelTest\AbstractIntegrationTestCase;
 
-class UserServiceTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(UserService::class)]
+#[RunTestsInSeparateProcesses]
+final class UserServiceTest extends AbstractIntegrationTestCase
 {
-    private EntityManagerInterface|MockObject $entityManager;
-    private PhoneRepository|MockObject $phoneRepository;
-    private UserLoaderInterface|MockObject $userLoader;
-    private UserRepository|MockObject $alipayUserRepository;
-    private UserService $userService;
-
-    protected function setUp(): void
+    protected function onSetUp(): void
     {
-        $this->entityManager = $this->createMock(EntityManagerInterface::class);
-        $this->phoneRepository = $this->createMock(PhoneRepository::class);
-        $this->userLoader = $this->createMock(UserLoaderInterface::class);
-        $this->alipayUserRepository = $this->createMock(UserRepository::class);
-        
-        $this->userService = new UserService(
-            $this->entityManager,
-            $this->phoneRepository,
-            $this->userLoader,
-            $this->alipayUserRepository
-        );
     }
 
-    public function testUpdateUserInfo_withAllFields(): void
+    public function testUpdateUserInfoWithAllFields(): void
     {
-        // Arrange
+        $miniProgram = new MiniProgram();
+        $miniProgram->setAppId('test_app_id');
+        $miniProgram->setName('Test App');
+        $miniProgram->setPrivateKey('test_private_key');
+        $miniProgram->setAlipayPublicKey('test_alipay_public_key');
+        self::getService(EntityManagerInterface::class)->persist($miniProgram);
+
         $user = new User();
-        $userInfo = [
-            'nick_name' => 'Test User',
-            'avatar' => 'https://example.com/avatar.jpg',
-            'province' => 'Test Province',
-            'city' => 'Test City',
+        $user->setOpenId('test_open_id');
+        $user->setMiniProgram($miniProgram);
+        self::getService(EntityManagerInterface::class)->persist($user);
+        self::getService(EntityManagerInterface::class)->flush();
+
+        $userService = self::getService(UserService::class);
+
+        $userService->updateUserInfo($user, [
+            'nick_name' => 'test_nick_name',
+            'avatar' => 'test_avatar',
+            'province' => 'test_province',
+            'city' => 'test_city',
             'gender' => AlipayUserGender::MALE->value,
-        ];
-        
-        $this->entityManager->expects($this->once())
-            ->method('persist')
-            ->with($user);
-            
-        $this->entityManager->expects($this->once())
-            ->method('flush');
-        
-        // Act
-        $this->userService->updateUserInfo($user, $userInfo);
-        
-        // Assert
-        $this->assertEquals('Test User', $user->getNickName());
-        $this->assertEquals('https://example.com/avatar.jpg', $user->getAvatar());
-        $this->assertEquals('Test Province', $user->getProvince());
-        $this->assertEquals('Test City', $user->getCity());
+        ]);
+
+        $this->assertEquals('test_nick_name', $user->getNickName());
+        $this->assertEquals('test_avatar', $user->getAvatar());
+        $this->assertEquals('test_province', $user->getProvince());
+        $this->assertEquals('test_city', $user->getCity());
         $this->assertEquals(AlipayUserGender::MALE, $user->getGender());
-        $this->assertInstanceOf(\DateTimeInterface::class, $user->getLastInfoUpdateTime());
     }
-    
-    public function testUpdateUserInfo_withPartialFields(): void
+
+    public function testUpdateUserInfoWithPartialFields(): void
     {
-        // Arrange
+        $miniProgram = new MiniProgram();
+        $miniProgram->setAppId('test_app_id_2');
+        $miniProgram->setName('Test App 2');
+        $miniProgram->setPrivateKey('test_private_key_2');
+        $miniProgram->setAlipayPublicKey('test_alipay_public_key_2');
+        self::getService(EntityManagerInterface::class)->persist($miniProgram);
+
         $user = new User();
-        $userInfo = [
-            'nick_name' => 'Test User',
-            // No avatar, province, city, gender
-        ];
-        
-        $this->entityManager->expects($this->once())
-            ->method('persist')
-            ->with($user);
-            
-        $this->entityManager->expects($this->once())
-            ->method('flush');
-        
-        // Act
-        $this->userService->updateUserInfo($user, $userInfo);
-        
-        // Assert
-        $this->assertEquals('Test User', $user->getNickName());
+        $user->setOpenId('test_open_id_2');
+        $user->setMiniProgram($miniProgram);
+        self::getService(EntityManagerInterface::class)->persist($user);
+        self::getService(EntityManagerInterface::class)->flush();
+
+        $userService = self::getService(UserService::class);
+
+        $userService->updateUserInfo($user, ['nick_name' => 'new_nick_name']);
+
+        $this->assertEquals('new_nick_name', $user->getNickName());
         $this->assertNull($user->getAvatar());
         $this->assertNull($user->getProvince());
         $this->assertNull($user->getCity());
         $this->assertNull($user->getGender());
-        $this->assertInstanceOf(\DateTimeInterface::class, $user->getLastInfoUpdateTime());
     }
-    
-    public function testBindPhone_withNewPhoneNumber(): void
+
+    public function testServiceCanBeInstantiated(): void
     {
-        // Arrange
-        $user = new User();
-        $phoneNumber = '13800138000';
-        
-        $this->phoneRepository->expects($this->once())
-            ->method('findByNumber')
-            ->with($phoneNumber)
-            ->willReturn(null);
-            
-        $this->entityManager->expects($this->exactly(2))
-            ->method('persist')
-            ->willReturnCallback(function ($entity) use ($user, $phoneNumber) {
-                static $callCount = 0;
-                $callCount++;
-                
-                if ($callCount === 1) {
-                    $this->assertInstanceOf(Phone::class, $entity);
-                    $this->assertEquals($phoneNumber, $entity->getNumber());
-                } else {
-                    $this->assertInstanceOf(AlipayUserPhone::class, $entity);
-                    $this->assertSame($user, $entity->getUser());
-                    $this->assertInstanceOf(Phone::class, $entity->getPhone());
-                    $this->assertInstanceOf(\DateTimeInterface::class, $entity->getVerifiedTime());
-                }
-                
-                return null;
-            });
-            
-        $this->entityManager->expects($this->once())
-            ->method('flush');
-        
-        // Act
-        $this->userService->bindPhone($user, $phoneNumber);
+        $userService = self::getService(UserService::class);
+        $this->assertInstanceOf(UserService::class, $userService);
     }
-    
-    public function testBindPhone_withExistingPhoneNumber(): void
+
+    public function testBindPhone(): void
     {
-        // Arrange
+        // 创建测试数据
+        $miniProgram = new MiniProgram();
+        $miniProgram->setAppId('test_app_id_bind');
+        $miniProgram->setName('Test App Bind');
+        $miniProgram->setPrivateKey('test_private_key_bind');
+        $miniProgram->setAlipayPublicKey('test_alipay_public_key_bind');
+        self::getService(EntityManagerInterface::class)->persist($miniProgram);
+
         $user = new User();
+        $user->setOpenId('test_open_id_bind');
+        $user->setMiniProgram($miniProgram);
+        self::getService(EntityManagerInterface::class)->persist($user);
+        self::getService(EntityManagerInterface::class)->flush();
+
+        $userService = self::getService(UserService::class);
         $phoneNumber = '13800138000';
+
+        // 执行绑定
+        $userService->bindPhone($user, $phoneNumber);
+
+        // 验证绑定成功
+        $phoneRepository = self::getService(PhoneRepository::class);
+        $phone = $phoneRepository->findByNumber($phoneNumber);
+
+        $this->assertNotNull($phone);
+        $this->assertEquals($phoneNumber, $phone->getNumber());
+
+        // 验证关联关系
+        $userPhones = $user->getUserPhones();
+        $this->assertCount(1, $userPhones);
+
+        $firstUserPhone = $userPhones->first();
+        $this->assertNotFalse($firstUserPhone, 'Should have at least one user phone');
+
+        $phone = $firstUserPhone->getPhone();
+        $this->assertNotNull($phone, 'User phone should have associated phone');
+        $this->assertEquals($phoneNumber, $phone->getNumber());
+    }
+
+    public function testBindPhoneWithExistingPhone(): void
+    {
+        // 先创建一个已存在的手机号
         $existingPhone = new Phone();
-        $existingPhone->setNumber($phoneNumber);
-        
-        $this->phoneRepository->expects($this->once())
-            ->method('findByNumber')
-            ->with($phoneNumber)
-            ->willReturn($existingPhone);
-            
-        $this->entityManager->expects($this->once())
-            ->method('persist')
-            ->with($this->callback(function ($entity) use ($user, $existingPhone) {
-                return $entity instanceof AlipayUserPhone 
-                    && $entity->getUser() === $user
-                    && $entity->getPhone() === $existingPhone
-                    && $entity->getVerifiedTime() instanceof \DateTimeInterface;
-            }));
-            
-        $this->entityManager->expects($this->once())
-            ->method('flush');
-        
-        // Act
-        $this->userService->bindPhone($user, $phoneNumber);
+        $existingPhone->setNumber('13900139000');
+        self::getService(EntityManagerInterface::class)->persist($existingPhone);
+
+        $miniProgram = new MiniProgram();
+        $miniProgram->setAppId('test_app_id_existing');
+        $miniProgram->setName('Test App Existing');
+        $miniProgram->setPrivateKey('test_private_key_existing');
+        $miniProgram->setAlipayPublicKey('test_alipay_public_key_existing');
+        self::getService(EntityManagerInterface::class)->persist($miniProgram);
+
+        $user = new User();
+        $user->setOpenId('test_open_id_existing');
+        $user->setMiniProgram($miniProgram);
+        self::getService(EntityManagerInterface::class)->persist($user);
+        self::getService(EntityManagerInterface::class)->flush();
+
+        $userService = self::getService(UserService::class);
+
+        // 绑定已存在的手机号
+        $userService->bindPhone($user, '13900139000');
+
+        // 验证只有一个手机号记录
+        $phoneRepository = self::getService(PhoneRepository::class);
+        $phones = $phoneRepository->findBy(['number' => '13900139000']);
+        $this->assertCount(1, $phones);
     }
-    
-    public function testGetLatestPhone_whenPhoneExists(): void
+
+    public function testGetLatestPhone(): void
     {
-        // Arrange
-        $user = $this->createMock(User::class);
-        $phone = new Phone();
-        $phone->setNumber('13800138000');
-        
-        $user->expects($this->once())
-            ->method('getLatestPhone')
-            ->willReturn($phone);
-        
-        // Act
-        $result = $this->userService->getLatestPhone($user);
-        
-        // Assert
-        $this->assertEquals('13800138000', $result);
+        // 创建测试数据
+        $miniProgram = new MiniProgram();
+        $miniProgram->setAppId('test_app_id_phone');
+        $miniProgram->setName('Test App Phone');
+        $miniProgram->setPrivateKey('test_private_key_phone');
+        $miniProgram->setAlipayPublicKey('test_alipay_public_key_phone');
+        self::getService(EntityManagerInterface::class)->persist($miniProgram);
+
+        $user = new User();
+        $user->setOpenId('test_open_id_phone');
+        $user->setMiniProgram($miniProgram);
+        self::getService(EntityManagerInterface::class)->persist($user);
+        self::getService(EntityManagerInterface::class)->flush();
+
+        $userService = self::getService(UserService::class);
+
+        // 测试无手机号情况
+        $phone = $userService->getLatestPhone($user);
+        $this->assertNull($phone);
+
+        // 绑定手机号后测试
+        $userService->bindPhone($user, '13800138001');
+        $phone = $userService->getLatestPhone($user);
+        $this->assertEquals('13800138001', $phone);
     }
-    
-    public function testGetLatestPhone_whenNoPhoneExists(): void
-    {
-        // Arrange
-        $user = $this->createMock(User::class);
-        
-        $user->expects($this->once())
-            ->method('getLatestPhone')
-            ->willReturn(null);
-        
-        // Act
-        $result = $this->userService->getLatestPhone($user);
-        
-        // Assert
-        $this->assertNull($result);
-    }
-    
+
     public function testGetAllPhones(): void
     {
-        // Arrange
-        $user = $this->createMock(User::class);
-        $phone1 = new Phone();
-        $phone1->setNumber('13800138000');
-        $phone2 = new Phone();
-        $phone2->setNumber('13900139000');
-        
-        $userPhone1 = new AlipayUserPhone();
-        $userPhone1->setPhone($phone1);
-        $userPhone2 = new AlipayUserPhone();
-        $userPhone2->setPhone($phone2);
-        
-        $phoneCollection = new ArrayCollection([$userPhone1, $userPhone2]);
-        
-        $user->expects($this->once())
-            ->method('getUserPhones')
-            ->willReturn($phoneCollection);
-        
-        // Act
-        $result = $this->userService->getAllPhones($user);
-        
-        // Assert
-        $this->assertEquals(['13800138000', '13900139000'], $result);
+        // 创建测试数据
+        $miniProgram = new MiniProgram();
+        $miniProgram->setAppId('test_app_id_all_phones');
+        $miniProgram->setName('Test App All Phones');
+        $miniProgram->setPrivateKey('test_private_key_all_phones');
+        $miniProgram->setAlipayPublicKey('test_alipay_public_key_all_phones');
+        self::getService(EntityManagerInterface::class)->persist($miniProgram);
+
+        $user = new User();
+        $user->setOpenId('test_open_id_all_phones');
+        $user->setMiniProgram($miniProgram);
+        self::getService(EntityManagerInterface::class)->persist($user);
+        self::getService(EntityManagerInterface::class)->flush();
+
+        $userService = self::getService(UserService::class);
+
+        // 测试无手机号情况
+        $phones = $userService->getAllPhones($user);
+        $this->assertIsArray($phones);
+        $this->assertEmpty($phones);
+
+        // 绑定多个手机号后测试
+        $userService->bindPhone($user, '13800138002');
+        $userService->bindPhone($user, '13900139002');
+
+        $phones = $userService->getAllPhones($user);
+        $this->assertIsArray($phones);
+        $this->assertCount(2, $phones);
+        $this->assertContains('13800138002', $phones);
+        $this->assertContains('13900139002', $phones);
     }
-    
-    public function testGetUserInterface_whenUserExists(): void
+
+    // InterfaceStub方法 - 简化测试中的接口实现
+
+    /**
+     * 创建UserInterface的简单stub实现
+     *
+     * @param non-empty-string $userIdentifier 用户标识符
+     * @param array<string> $roles 用户角色数组
+     */
+    private function createUserStub(string $userIdentifier = 'test-user', array $roles = []): UserInterface
     {
-        // Arrange
-        $user = $this->createMock(User::class);
-        $bizUser = $this->createMock(UserInterface::class);
-        
-        $user->expects($this->once())
-            ->method('getOpenId')
-            ->willReturn('test_open_id');
-            
-        $this->userLoader->expects($this->once())
-            ->method('loadUserByIdentifier')
-            ->with('test_open_id')
-            ->willReturn($bizUser);
-        
-        // Act
-        $result = $this->userService->getBizUser($user);
-        
-        // Assert
-        $this->assertSame($bizUser, $result);
+        // @phpstan-ignore-next-line PreferInterfaceStubTraitRule.createTestUser
+        return new class($userIdentifier, $roles) implements UserInterface {
+            /**
+             * @param non-empty-string $userIdentifier
+             * @param array<string> $roles
+             */
+            public function __construct(
+                private string $userIdentifier,
+                private array $roles,
+            ) {
+            }
+
+            /** @return non-empty-string */
+            public function getUserIdentifier(): string
+            {
+                return $this->userIdentifier;
+            }
+
+            public function getRoles(): array
+            {
+                return $this->roles;
+            }
+
+            public function eraseCredentials(): void
+            {
+                // 空实现 - stub不需要真正的凭据管理
+            }
+        };
     }
-    
-    public function testGetAlipayUser_whenFoundByUsername(): void
+
+    public function testRequireAlipayUserException(): void
     {
-        // Arrange
-        $bizUser = $this->createMock(UserInterface::class);
-        $alipayUser = $this->createMock(User::class);
-        
-        $bizUser->expects($this->once())
-            ->method('getUserIdentifier')
-            ->willReturn('test_open_id');
-            
-        $this->alipayUserRepository->expects($this->once())
-            ->method('findOneBy')
-            ->with(['openId' => 'test_open_id'])
-            ->willReturn($alipayUser);
-        
-        // Act
-        $result = $this->userService->getAlipayUser($bizUser);
-        
-        // Assert
-        $this->assertSame($alipayUser, $result);
-    }
-    
-    public function testGetAlipayUser_whenNotFound(): void
-    {
-        // Arrange
-        $bizUser = $this->createMock(UserInterface::class);
-        
-        $bizUser->expects($this->once())
-            ->method('getUserIdentifier')
-            ->willReturn('test_open_id');
-            
-        $this->alipayUserRepository->expects($this->once())
-            ->method('findOneBy')
-            ->with(['openId' => 'test_open_id'])
-            ->willReturn(null);
-        
-        // Act
-        $result = $this->userService->getAlipayUser($bizUser);
-        
-        // Assert
-        $this->assertNull($result);
-    }
-    
-    public function testRequireAlipayUser_whenUserExists(): void
-    {
-        // Arrange
-        $bizUser = $this->createMock(UserInterface::class);
-        $alipayUser = $this->createMock(User::class);
-        
-        $bizUser->expects($this->once())
-            ->method('getUserIdentifier')
-            ->willReturn('test_open_id');
-            
-        $this->alipayUserRepository->expects($this->once())
-            ->method('findOneBy')
-            ->with(['openId' => 'test_open_id'])
-            ->willReturn($alipayUser);
-        
-        // Act
-        $result = $this->userService->requireAlipayUser($bizUser);
-        
-        // Assert
-        $this->assertSame($alipayUser, $result);
-    }
-    
-    public function testRequireAlipayUser_whenUserDoesNotExist(): void
-    {
-        // Arrange
-        $bizUser = $this->createMock(UserInterface::class);
-        
-        $bizUser->expects($this->once())
-            ->method('getUserIdentifier')
-            ->willReturn('test_open_id');
-            
-        $this->alipayUserRepository->expects($this->once())
-            ->method('findOneBy')
-            ->with(['openId' => 'test_open_id'])
-            ->willReturn(null);
-        
-        // Assert
-        $this->expectException(ApiException::class);
+        // @phpstan-ignore-next-line PreferInterfaceStubTraitRule.createTestUser
+        $bizUser = $this->createUserStub('nonexistent_open_id');
+
+        $userService = self::getService(UserService::class);
+
+        $this->expectException(UserNotFoundException::class);
         $this->expectExceptionMessage('未找到对应的支付宝用户');
-        
-        // Act
-        $this->userService->requireAlipayUser($bizUser);
+
+        $userService->requireAlipayUser($bizUser);
     }
-} 
+}

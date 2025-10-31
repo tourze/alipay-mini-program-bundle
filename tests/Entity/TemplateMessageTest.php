@@ -5,62 +5,50 @@ namespace AlipayMiniProgramBundle\Tests\Entity;
 use AlipayMiniProgramBundle\Entity\MiniProgram;
 use AlipayMiniProgramBundle\Entity\TemplateMessage;
 use AlipayMiniProgramBundle\Entity\User;
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use Tourze\PHPUnitDoctrineEntity\AbstractEntityTestCase;
 
-class TemplateMessageTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(TemplateMessage::class)]
+final class TemplateMessageTest extends AbstractEntityTestCase
 {
-    public function testGettersAndSetters(): void
+    protected function createEntity(): object
     {
-        // Arrange
-        $message = new TemplateMessage();
+        // TemplateMessage has required relations, so we need to create a minimal valid entity
         $miniProgram = new MiniProgram();
+        $miniProgram->setName('Test MiniProgram');
+        $miniProgram->setAppId('test_app_id');
+        $miniProgram->setPrivateKey('test_key');
+        $miniProgram->setAlipayPublicKey('test_public_key');
+
         $user = new User();
-        $data = ['keyword1' => ['value' => 'test']];
-        $sentTime = new \DateTimeImmutable();
-        $createTime = new \DateTimeImmutable();
-        $updateTime = new \DateTimeImmutable();
+        $user->setMiniProgram($miniProgram);
+        $user->setOpenId('test_open_id');
 
-        // Act & Assert
-        $this->assertEquals(0, $message->getId());
-
+        $message = new TemplateMessage();
         $message->setMiniProgram($miniProgram);
-        $this->assertSame($miniProgram, $message->getMiniProgram());
-
         $message->setToUser($user);
-        $this->assertSame($user, $message->getToUser());
+        $message->setTemplateId('test_template');
+        $message->setToOpenId('test_open_id');
 
-        $message->setTemplateId('template_123');
-        $this->assertEquals('template_123', $message->getTemplateId());
+        return $message;
+    }
 
-        $message->setToOpenId('open_id_123');
-        $this->assertEquals('open_id_123', $message->getToOpenId());
-
-        $message->setPage('pages/index/index');
-        $this->assertEquals('pages/index/index', $message->getPage());
-
-        $message->setData($data);
-        $this->assertEquals($data, $message->getData());
-
-        $message->setIsSent(true);
-        $this->assertTrue($message->isSent());
-
-        $message->setSentTime($sentTime);
-        $this->assertSame($sentTime, $message->getSentTime());
-
-        $message->setSendResult('success');
-        $this->assertEquals('success', $message->getSendResult());
-
-        $message->setCreatedBy('admin');
-        $this->assertEquals('admin', $message->getCreatedBy());
-
-        $message->setUpdatedBy('admin');
-        $this->assertEquals('admin', $message->getUpdatedBy());
-
-        $message->setCreateTime($createTime);
-        $this->assertSame($createTime, $message->getCreateTime());
-
-        $message->setUpdateTime($updateTime);
-        $this->assertSame($updateTime, $message->getUpdateTime());
+    /**
+     * @return iterable<string, array{string, mixed}>
+     */
+    public static function propertiesProvider(): iterable
+    {
+        return [
+            'templateId' => ['templateId', 'template_123'],
+            'toOpenId' => ['toOpenId', 'open_id_123'],
+            'page' => ['page', 'pages/index/index'],
+            'data' => ['data', ['keyword1' => ['value' => 'test']]],
+            'sentTime' => ['sentTime', new \DateTimeImmutable()],
+            'sendResult' => ['sendResult', 'success'],
+        ];
     }
 
     public function testDefaultValues(): void
@@ -76,46 +64,7 @@ class TemplateMessageTest extends TestCase
         $this->assertNull($message->getSendResult());
     }
 
-    public function testSetPage_withNullValue(): void
-    {
-        // Arrange
-        $message = new TemplateMessage();
-
-        // Act
-        $result = $message->setPage(null);
-
-        // Assert
-        $this->assertSame($message, $result); // Test fluent interface
-        $this->assertNull($message->getPage());
-    }
-
-    public function testSetSentTime_withNullValue(): void
-    {
-        // Arrange
-        $message = new TemplateMessage();
-
-        // Act
-        $result = $message->setSentTime(null);
-
-        // Assert
-        $this->assertSame($message, $result); // Test fluent interface
-        $this->assertNull($message->getSentTime());
-    }
-
-    public function testSetSendResult_withNullValue(): void
-    {
-        // Arrange
-        $message = new TemplateMessage();
-
-        // Act
-        $result = $message->setSendResult(null);
-
-        // Assert
-        $this->assertSame($message, $result); // Test fluent interface
-        $this->assertNull($message->getSendResult());
-    }
-
-    public function testSetData_withComplexData(): void
+    public function testSetDataWithComplexData(): void
     {
         // Arrange
         $message = new TemplateMessage();
@@ -123,44 +72,28 @@ class TemplateMessageTest extends TestCase
             'keyword1' => ['value' => '订单状态'],
             'keyword2' => ['value' => '已发货'],
             'keyword3' => ['value' => '2023-12-01 10:00:00'],
-            'remark' => ['value' => '感谢您的购买！']
+            'remark' => ['value' => '感谢您的购买！'],
         ];
 
         // Act
-        $result = $message->setData($complexData);
+        $message->setData($complexData);
 
         // Assert
-        $this->assertSame($message, $result); // Test fluent interface
+
         $this->assertEquals($complexData, $message->getData());
     }
 
-    public function testIsSent_defaultValue(): void
-    {
-        // Arrange & Act
-        $message = new TemplateMessage();
-
-        // Assert
-        $this->assertFalse($message->isSent());
-    }
-
-    public function testFluentInterface(): void
+    public function testIsSentGetterSetter(): void
     {
         // Arrange
-        $message = new TemplateMessage();
-        $miniProgram = new MiniProgram();
-        $user = new User();
+        $message = $this->createEntity();
+        $this->assertInstanceOf(TemplateMessage::class, $message);
 
-        // Act & Assert - Test that all setters return the entity instance
-        $this->assertSame($message, $message->setMiniProgram($miniProgram));
-        $this->assertSame($message, $message->setToUser($user));
-        $this->assertSame($message, $message->setTemplateId('test'));
-        $this->assertSame($message, $message->setToOpenId('test'));
-        $this->assertSame($message, $message->setPage('test'));
-        $this->assertSame($message, $message->setData([]));
-        $this->assertSame($message, $message->setIsSent(true));
-        $this->assertSame($message, $message->setSentTime(new \DateTimeImmutable()));
-        $this->assertSame($message, $message->setSendResult('test'));
-        $this->assertSame($message, $message->setCreatedBy('test'));
-        $this->assertSame($message, $message->setUpdatedBy('test'));
+        // Act & Assert - Test fluent interface
+        $message->setIsSent(true);
+        $this->assertTrue($message->isSent());
+
+        $message->setIsSent(false);
+        $this->assertFalse($message->isSent());
     }
 }

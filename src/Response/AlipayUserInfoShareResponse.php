@@ -3,6 +3,7 @@
 namespace AlipayMiniProgramBundle\Response;
 
 use AlipayMiniProgramBundle\Enum\AlipayUserGender;
+use AlipayMiniProgramBundle\Utils\ResponseSanitizer;
 
 class AlipayUserInfoShareResponse
 {
@@ -30,17 +31,19 @@ class AlipayUserInfoShareResponse
 
     public function __construct(\stdClass $response)
     {
-        $this->success = empty($response->code) || '10000' === $response->code;
-        $this->code = $response->code ?? null;
-        $this->msg = $response->msg ?? null;
-        $this->subCode = $response->sub_code ?? null;
-        $this->subMsg = $response->sub_msg ?? null;
-        $this->userId = $response->user_id ?? null;
-        $this->avatar = $response->avatar ?? null;
-        $this->province = $response->province ?? null;
-        $this->city = $response->city ?? null;
-        $this->nickName = $response->nick_name ?? null;
-        $this->gender = isset($response->gender) ? AlipayUserGender::from($response->gender) : null;
+        $code = ResponseSanitizer::expectNullableString($response, 'code');
+        $this->success = null === $code || '10000' === $code;
+        $this->code = $code;
+        $this->msg = ResponseSanitizer::expectNullableString($response, 'msg');
+        $this->subCode = ResponseSanitizer::expectNullableString($response, 'sub_code');
+        $this->subMsg = ResponseSanitizer::expectNullableString($response, 'sub_msg');
+        $this->userId = ResponseSanitizer::expectNullableString($response, 'user_id');
+        $this->avatar = ResponseSanitizer::expectNullableString($response, 'avatar');
+        $this->province = ResponseSanitizer::expectNullableString($response, 'province');
+        $this->city = ResponseSanitizer::expectNullableString($response, 'city');
+        $this->nickName = ResponseSanitizer::expectNullableString($response, 'nick_name');
+        $genderValue = ResponseSanitizer::expectNullableString($response, 'gender');
+        $this->gender = null !== $genderValue ? AlipayUserGender::from($genderValue) : null;
     }
 
     public function isSuccess(): bool

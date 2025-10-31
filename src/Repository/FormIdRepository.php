@@ -7,17 +7,14 @@ use AlipayMiniProgramBundle\Entity\MiniProgram;
 use AlipayMiniProgramBundle\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-
+use Tourze\PHPUnitSymfonyKernelTest\Attribute\AsRepository;
 
 /**
- * @method FormId|null find($id, $lockMode = null, $lockVersion = null)
- * @method FormId|null findOneBy(array $criteria, array $orderBy = null)
- * @method FormId[]    findAll()
- * @method FormId[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @extends ServiceEntityRepository<FormId>
  */
+#[AsRepository(entityClass: FormId::class)]
 class FormIdRepository extends ServiceEntityRepository
 {
-
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, FormId::class);
@@ -32,7 +29,7 @@ class FormIdRepository extends ServiceEntityRepository
      */
     public function findAvailableFormId(MiniProgram $miniProgram, User $user): ?FormId
     {
-        return $this->createQueryBuilder('f')
+        $result = $this->createQueryBuilder('f')
             ->andWhere('f.miniProgram = :miniProgram')
             ->andWhere('f.user = :user')
             ->andWhere('f.usedCount < 3')
@@ -43,7 +40,10 @@ class FormIdRepository extends ServiceEntityRepository
             ->orderBy('f.expireTime', 'ASC')
             ->setMaxResults(1)
             ->getQuery()
-            ->getOneOrNullResult();
+            ->getOneOrNullResult()
+        ;
+
+        return $result instanceof FormId ? $result : null;
     }
 
     /**
@@ -59,12 +59,33 @@ class FormIdRepository extends ServiceEntityRepository
     {
         $expireDate = new \DateTime('-7 days');
 
-        return $this->createQueryBuilder('f')
+        $result = $this->createQueryBuilder('f')
             ->delete()
             ->where('f.expireTime <= :expireDate')
             ->andWhere('f.usedCount = 0')
             ->setParameter('expireDate', $expireDate)
             ->getQuery()
-            ->execute();
+            ->execute()
+        ;
+
+        return is_numeric($result) ? (int) $result : 0;
+    }
+
+    public function save(FormId $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function remove(FormId $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->remove($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
     }
 }

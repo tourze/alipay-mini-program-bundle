@@ -29,13 +29,15 @@ class SendPendingTemplateMessagesCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addOption('limit', 'l', InputOption::VALUE_OPTIONAL, '每次处理的消息数量', 10);
+            ->addOption('limit', 'l', InputOption::VALUE_OPTIONAL, '每次处理的消息数量', 10)
+        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $limit = (int) $input->getOption('limit');
+        $limitOption = $input->getOption('limit');
+        $limit = is_numeric($limitOption) ? (int) $limitOption : 10;
 
         $io->info(sprintf('开始处理待发送的模板消息，每次处理 %d 条', $limit));
 

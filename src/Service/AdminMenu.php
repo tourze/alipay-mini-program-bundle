@@ -1,69 +1,41 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AlipayMiniProgramBundle\Service;
 
-use AlipayMiniProgramBundle\Controller\Admin\AlipayUserPhoneCrudController;
-use AlipayMiniProgramBundle\Controller\Admin\AuthCodeCrudController;
-use AlipayMiniProgramBundle\Controller\Admin\FormIdCrudController;
-use AlipayMiniProgramBundle\Controller\Admin\MiniProgramCrudController;
-use AlipayMiniProgramBundle\Controller\Admin\PhoneCrudController;
-use AlipayMiniProgramBundle\Controller\Admin\TemplateMessageCrudController;
-use AlipayMiniProgramBundle\Controller\Admin\UserCrudController;
-use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
+use AlipayMiniProgramBundle\Entity\AlipayUserPhone;
+use AlipayMiniProgramBundle\Entity\AuthCode;
+use AlipayMiniProgramBundle\Entity\FormId;
+use AlipayMiniProgramBundle\Entity\MiniProgram;
+use AlipayMiniProgramBundle\Entity\Phone;
+use AlipayMiniProgramBundle\Entity\TemplateMessage;
+use AlipayMiniProgramBundle\Entity\User;
+use Knp\Menu\ItemInterface;
+use Tourze\EasyAdminMenuBundle\Service\LinkGeneratorInterface;
+use Tourze\EasyAdminMenuBundle\Service\MenuProviderInterface;
 
-class AdminMenu
+readonly class AdminMenu implements MenuProviderInterface
 {
-    /**
-     * 获取支付宝小程序模块的菜单配置
-     *
-     * @return mixed[]
-     */
-    public static function getMenuItems(): array
+    public function __construct(private LinkGeneratorInterface $linkGenerator)
     {
-        return [
-            MenuItem::section('支付宝小程序', 'fas fa-alipay'),
-            
-            MenuItem::linkToCrud('小程序配置', 'fas fa-cogs', MiniProgramCrudController::getEntityFqcn())
-                ->setController(MiniProgramCrudController::class),
-            
-            MenuItem::linkToCrud('支付宝用户', 'fas fa-users', UserCrudController::getEntityFqcn())
-                ->setController(UserCrudController::class),
-            
-            MenuItem::linkToCrud('授权码记录', 'fas fa-key', AuthCodeCrudController::getEntityFqcn())
-                ->setController(AuthCodeCrudController::class),
-            
-            MenuItem::linkToCrud('表单ID管理', 'fas fa-clipboard-list', FormIdCrudController::getEntityFqcn())
-                ->setController(FormIdCrudController::class),
-            
-            MenuItem::linkToCrud('模板消息', 'fas fa-envelope', TemplateMessageCrudController::getEntityFqcn())
-                ->setController(TemplateMessageCrudController::class),
-            
-            MenuItem::linkToCrud('手机号码', 'fas fa-mobile-alt', PhoneCrudController::getEntityFqcn())
-                ->setController(PhoneCrudController::class),
-            
-            MenuItem::linkToCrud('用户手机号绑定', 'fas fa-link', AlipayUserPhoneCrudController::getEntityFqcn())
-                ->setController(AlipayUserPhoneCrudController::class),
-        ];
     }
 
-    /**
-     * 获取简化版菜单（只包含主要功能）
-     *
-     * @return mixed[]
-     */
-    public static function getSimpleMenuItems(): array
+    public function __invoke(ItemInterface $item): void
     {
-        return [
-            MenuItem::section('支付宝小程序', 'fas fa-alipay'),
-            
-            MenuItem::linkToCrud('小程序配置', 'fas fa-cogs', MiniProgramCrudController::getEntityFqcn())
-                ->setController(MiniProgramCrudController::class),
-            
-            MenuItem::linkToCrud('支付宝用户', 'fas fa-users', UserCrudController::getEntityFqcn())
-                ->setController(UserCrudController::class),
-            
-            MenuItem::linkToCrud('模板消息', 'fas fa-envelope', TemplateMessageCrudController::getEntityFqcn())
-                ->setController(TemplateMessageCrudController::class),
-        ];
+        if (null === $item->getChild('支付宝小程序')) {
+            $item->addChild('支付宝小程序')->setExtra('permission', 'AlipayMiniProgramBundle');
+        }
+
+        $alipayMenu = $item->getChild('支付宝小程序');
+        if (null !== $alipayMenu) {
+            $alipayMenu->addChild('小程序配置')->setUri($this->linkGenerator->getCurdListPage(MiniProgram::class));
+            $alipayMenu->addChild('支付宝用户')->setUri($this->linkGenerator->getCurdListPage(User::class));
+            $alipayMenu->addChild('授权码记录')->setUri($this->linkGenerator->getCurdListPage(AuthCode::class));
+            $alipayMenu->addChild('表单ID管理')->setUri($this->linkGenerator->getCurdListPage(FormId::class));
+            $alipayMenu->addChild('模板消息')->setUri($this->linkGenerator->getCurdListPage(TemplateMessage::class));
+            $alipayMenu->addChild('手机号码')->setUri($this->linkGenerator->getCurdListPage(Phone::class));
+            $alipayMenu->addChild('用户手机号绑定')->setUri($this->linkGenerator->getCurdListPage(AlipayUserPhone::class));
+        }
     }
-} 
+}
