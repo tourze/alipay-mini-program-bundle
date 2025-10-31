@@ -23,7 +23,7 @@ use Symfony\Component\HttpClient\Exception\TimeoutException;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Validator\Constraints as Assert;
-use Tourze\AccessTokenBundle\Service\AccessTokenService;
+use Tourze\AccessTokenContracts\TokenServiceInterface;
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
 use Tourze\JsonRPC\Core\Attribute\MethodExpose;
 use Tourze\JsonRPC\Core\Attribute\MethodParam;
@@ -70,7 +70,7 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
         private readonly MessageBusInterface $messageBus,
         private readonly RequestStack $requestStack,
         private readonly UserService $userService,
-        private readonly AccessTokenService $accessTokenService,
+        private readonly TokenServiceInterface $accessTokenService,
     ) {
     }
 
