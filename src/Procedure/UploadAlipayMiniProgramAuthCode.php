@@ -23,6 +23,7 @@ use Symfony\Component\HttpClient\Exception\TimeoutException;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Validator\Constraints as Assert;
+use Tourze\AccessTokenContracts\AccessTokenInterface;
 use Tourze\AccessTokenContracts\TokenServiceInterface;
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
 use Tourze\JsonRPC\Core\Attribute\MethodExpose;
@@ -233,8 +234,13 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
     private function createBusinessToken(User $user): string
     {
         $bizUser = $this->userService->getBizUser($user);
+        $token = $this->accessTokenService->createToken($bizUser);
 
-        return $this->accessTokenService->createToken($bizUser);
+        if ($token instanceof \Stringable) {
+            return (string)$token;
+        }
+
+        return '';
     }
 
     /**
