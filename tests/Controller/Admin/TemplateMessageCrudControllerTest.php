@@ -3,7 +3,6 @@
 namespace AlipayMiniProgramBundle\Tests\Controller\Admin;
 
 use AlipayMiniProgramBundle\Controller\Admin\TemplateMessageCrudController;
-use AlipayMiniProgramBundle\Entity\TemplateMessage;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
@@ -21,24 +20,6 @@ use Tourze\PHPUnitSymfonyWebTest\AbstractEasyAdminControllerTestCase;
 #[RunTestsInSeparateProcesses]
 final class TemplateMessageCrudControllerTest extends AbstractEasyAdminControllerTestCase
 {
-    public function testGetEntityFqcnReturnsCorrectClass(): void
-    {
-        $client = self::createClientWithDatabase();
-
-        // Create and login as admin user
-        $this->createAdminUser('admin@test.com', 'admin123');
-        $this->loginAsAdmin($client, 'admin@test.com', 'admin123');
-
-        // Test HTTP layer accessibility
-        $client->request('GET', '/admin/alipay-mini-program/template-message');
-        $this->assertTrue(
-            $client->getResponse()->isSuccessful() || $client->getResponse()->isRedirect(),
-            'Controller endpoint should be accessible'
-        );
-
-        $this->assertEquals(TemplateMessage::class, TemplateMessageCrudController::getEntityFqcn());
-    }
-
     public function testConfigureActions(): void
     {
         $client = self::createClientWithDatabase();

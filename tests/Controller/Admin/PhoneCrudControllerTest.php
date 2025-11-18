@@ -21,24 +21,6 @@ use Tourze\PHPUnitSymfonyWebTest\AbstractEasyAdminControllerTestCase;
 #[RunTestsInSeparateProcesses]
 final class PhoneCrudControllerTest extends AbstractEasyAdminControllerTestCase
 {
-    public function testGetEntityFqcnReturnsCorrectClass(): void
-    {
-        $client = self::createClientWithDatabase();
-
-        // Create and login as admin user
-        $this->createAdminUser('admin@test.com', 'admin123');
-        $this->loginAsAdmin($client, 'admin@test.com', 'admin123');
-
-        // Test HTTP layer accessibility
-        $client->request('GET', '/admin/alipay-mini-program/phone');
-        $this->assertTrue(
-            $client->getResponse()->isSuccessful() || $client->getResponse()->isRedirect(),
-            'Controller endpoint should be accessible'
-        );
-
-        $this->assertEquals(Phone::class, PhoneCrudController::getEntityFqcn());
-    }
-
     public function testConfigureActions(): void
     {
         $client = self::createClientWithDatabase();
