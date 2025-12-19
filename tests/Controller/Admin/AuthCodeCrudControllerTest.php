@@ -154,7 +154,7 @@ final class AuthCodeCrudControllerTest extends AbstractEasyAdminControllerTestCa
     }
 
     /**
-     * @phpstan-ignore-next-line missingType.generics
+     * @return AuthCodeCrudController
      */
     protected function getControllerService(): AbstractCrudController
     {

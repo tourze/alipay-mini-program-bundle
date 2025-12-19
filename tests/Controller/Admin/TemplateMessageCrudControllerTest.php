@@ -202,7 +202,7 @@ final class TemplateMessageCrudControllerTest extends AbstractEasyAdminControlle
     }
 
     /**
-     * @phpstan-ignore-next-line missingType.generics
+     * @return TemplateMessageCrudController
      */
     protected function getControllerService(): AbstractCrudController
     {

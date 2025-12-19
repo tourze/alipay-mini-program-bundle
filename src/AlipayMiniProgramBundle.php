@@ -5,6 +5,7 @@ namespace AlipayMiniProgramBundle;
 use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use Symfony\Bundle\SecurityBundle\SecurityBundle;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
+use Tourze\AccessTokenBundle\AccessTokenBundle;
 use Tourze\BundleDependency\BundleDependencyInterface;
 use Tourze\DoctrineIndexedBundle\DoctrineIndexedBundle;
 use Tourze\EasyAdminMenuBundle\EasyAdminMenuBundle;
@@ -16,6 +17,7 @@ class AlipayMiniProgramBundle extends Bundle implements BundleDependencyInterfac
     public static function getBundleDependencies(): array
     {
         return [
+            AccessTokenBundle::class => ['all' => true],
             DoctrineBundle::class => ['all' => true],
             DoctrineIndexedBundle::class => ['all' => true],
             EasyAdminMenuBundle::class => ['all' => true],

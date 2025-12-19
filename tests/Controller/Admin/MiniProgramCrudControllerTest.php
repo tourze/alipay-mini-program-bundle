@@ -202,7 +202,7 @@ final class MiniProgramCrudControllerTest extends AbstractEasyAdminControllerTes
     }
 
     /**
-     * @phpstan-ignore-next-line missingType.generics
+     * @return MiniProgramCrudController
      */
     protected function getControllerService(): AbstractCrudController
     {

@@ -202,7 +202,7 @@ final class FormIdCrudControllerTest extends AbstractEasyAdminControllerTestCase
     }
 
     /**
-     * @phpstan-ignore-next-line missingType.generics
+     * @return FormIdCrudController
      */
     protected function getControllerService(): AbstractCrudController
     {

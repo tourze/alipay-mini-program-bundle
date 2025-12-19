@@ -1012,7 +1012,7 @@ final class FormIdRepositoryTest extends AbstractRepositoryTestCase
     }
 
     /**
-     * 测试 IS NULL 查询 - 查询不存在的 NULL 记录
+     * 测试 IS NULL 查询 - 使用组合条件确保查询不到匹配的记录
      */
     public function testFindOneByNullReturnsNullWhenNoMatch(): void
     {
@@ -1030,7 +1030,7 @@ final class FormIdRepositoryTest extends AbstractRepositoryTestCase
         $user->setOpenId('test_open_id_null_no_match');
         $em->persist($user);
 
-        // 创建一个 FormId，设置所有时间字段
+        // 创建一个 FormId，设置所有时间字段（非 null）
         $formId = new FormId();
         $formId->setMiniProgram($miniProgram);
         $formId->setUser($user);
@@ -1045,7 +1045,13 @@ final class FormIdRepositoryTest extends AbstractRepositoryTestCase
 
         $em->flush();
 
-        $result = $this->repository->findOneBy(['createTime' => null]);
+        // 使用组合条件查询：同时匹配 formId 和 createTime 为 null
+        // 由于我们创建的记录 formId='test_form_id_null_no_match' 且 createTime 不为 null
+        // 所以这个查询不会匹配到任何记录
+        $result = $this->repository->findOneBy([
+            'formId' => 'test_form_id_null_no_match',
+            'createTime' => null,
+        ]);
 
         $this->assertNull($result);
     }

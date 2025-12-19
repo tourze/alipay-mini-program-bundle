@@ -4,16 +4,17 @@ namespace AlipayMiniProgramBundle\Procedure;
 
 use AlipayMiniProgramBundle\Entity\MiniProgram;
 use AlipayMiniProgramBundle\Entity\User;
+use AlipayMiniProgramBundle\Param\UploadAlipayMiniProgramPhoneNumberParam;
 use AlipayMiniProgramBundle\Service\UserService;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\Validator\Constraints as Assert;
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
 use Tourze\JsonRPC\Core\Attribute\MethodExpose;
-use Tourze\JsonRPC\Core\Attribute\MethodParam;
 use Tourze\JsonRPC\Core\Attribute\MethodTag;
+use Tourze\JsonRPC\Core\Contracts\RpcParamInterface;
+use Tourze\JsonRPC\Core\Result\ArrayResult;
 use Tourze\JsonRPC\Core\Exception\ApiException;
 use Tourze\JsonRPC\Core\Model\JsonRpcParams;
 use Tourze\JsonRPC\Core\Model\JsonRpcRequest;
@@ -30,13 +31,6 @@ use Tourze\JsonRPCLogBundle\Attribute\Log;
 #[Log]
 class UploadAlipayMiniProgramPhoneNumber extends LockableProcedure
 {
-    /**
-     * 加密数据
-     */
-    #[MethodParam(description: '加密数据')]
-    #[Assert\NotNull]
-    public string $encryptedData;
-
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly UserService $userService,
@@ -44,7 +38,10 @@ class UploadAlipayMiniProgramPhoneNumber extends LockableProcedure
     ) {
     }
 
-    public function execute(): array
+    /**
+     * @phpstan-param UploadAlipayMiniProgramPhoneNumberParam $param
+     */
+    public function execute(UploadAlipayMiniProgramPhoneNumberParam|RpcParamInterface $param): ArrayResult
     {
         // 获取用户
         $bizUser = $this->security->getUser();
@@ -55,27 +52,27 @@ class UploadAlipayMiniProgramPhoneNumber extends LockableProcedure
         $user = $this->userService->requireAlipayUser($bizUser);
 
         try {
-            $mobile = $this->decryptPhoneNumber($user->getMiniProgram());
+            $mobile = $this->decryptPhoneNumber($user->getMiniProgram(), $param->encryptedData);
             $this->userService->bindPhone($user, $mobile);
             $this->updateBizUserMobile($user, $mobile);
         } catch (UniqueConstraintViolationException $exception) {
             throw new ApiException('请返回重试', previous: $exception);
         }
 
-        return [
+        return new ArrayResult([
             'userId' => $user->getId(),
             'phoneNumber' => $mobile,
-        ];
+        ]);
     }
 
-    private function decryptPhoneNumber(MiniProgram $miniProgram): string
+    private function decryptPhoneNumber(MiniProgram $miniProgram, string $encryptedData): string
     {
-        $encryptedData = json_decode($this->encryptedData, true);
-        if (!is_array($encryptedData)) {
+        $encryptedDataArray = json_decode($encryptedData, true);
+        if (!is_array($encryptedDataArray)) {
             throw new ApiException('无效的加密数据格式');
         }
 
-        $response = $encryptedData['response'] ?? null;
+        $response = $encryptedDataArray['response'] ?? null;
         if (!is_string($response)) {
             throw new ApiException('请返回重试');
         }

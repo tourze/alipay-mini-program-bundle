@@ -184,7 +184,7 @@ final class AlipayUserPhoneCrudControllerTest extends AbstractEasyAdminControlle
     }
 
     /**
-     * @phpstan-ignore-next-line missingType.generics
+     * @return AlipayUserPhoneCrudController
      */
     protected function getControllerService(): AbstractCrudController
     {

@@ -12,8 +12,8 @@ use AlipayMiniProgramBundle\Service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
-use Symfony\Component\Security\Core\User\UserInterface;
 use Tourze\PHPUnitSymfonyKernelTest\AbstractIntegrationTestCase;
+use Tourze\UserServiceContracts\UserManagerInterface;
 
 /**
  * @internal
@@ -224,50 +224,11 @@ final class UserServiceTest extends AbstractIntegrationTestCase
         $this->assertContains('13900139002', $phones);
     }
 
-    // InterfaceStub方法 - 简化测试中的接口实现
-
-    /**
-     * 创建UserInterface的简单stub实现
-     *
-     * @param non-empty-string $userIdentifier 用户标识符
-     * @param array<string> $roles 用户角色数组
-     */
-    private function createUserStub(string $userIdentifier = 'test-user', array $roles = []): UserInterface
-    {
-        // @phpstan-ignore-next-line PreferInterfaceStubTraitRule.createTestUser
-        return new class($userIdentifier, $roles) implements UserInterface {
-            /**
-             * @param non-empty-string $userIdentifier
-             * @param array<string> $roles
-             */
-            public function __construct(
-                private string $userIdentifier,
-                private array $roles,
-            ) {
-            }
-
-            /** @return non-empty-string */
-            public function getUserIdentifier(): string
-            {
-                return $this->userIdentifier;
-            }
-
-            public function getRoles(): array
-            {
-                return $this->roles;
-            }
-
-            public function eraseCredentials(): void
-            {
-                // 空实现 - stub不需要真正的凭据管理
-            }
-        };
-    }
-
     public function testRequireAlipayUserException(): void
     {
-        // @phpstan-ignore-next-line PreferInterfaceStubTraitRule.createTestUser
-        $bizUser = $this->createUserStub('nonexistent_open_id');
+        // 使用 UserManagerInterface 创建真实的业务用户
+        $userManager = self::getService(UserManagerInterface::class);
+        $bizUser = $userManager->createUser('nonexistent_open_id_' . uniqid());
 
         $userService = self::getService(UserService::class);
 

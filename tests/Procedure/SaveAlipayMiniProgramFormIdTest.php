@@ -2,11 +2,12 @@
 
 namespace AlipayMiniProgramBundle\Tests\Procedure;
 
+use AlipayMiniProgramBundle\Param\SaveAlipayMiniProgramFormIdParam;
 use AlipayMiniProgramBundle\Procedure\SaveAlipayMiniProgramFormId;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
-use Tourze\JsonRPC\Core\Tests\AbstractProcedureTestCase;
 use Tourze\JsonRPCLockBundle\Procedure\LockableProcedure;
+use Tourze\PHPUnitJsonRPC\AbstractProcedureTestCase;
 
 /**
  * @internal
@@ -26,9 +27,9 @@ final class SaveAlipayMiniProgramFormIdTest extends AbstractProcedureTestCase
         $this->assertTrue($reflection->isSubclassOf(LockableProcedure::class));
     }
 
-    public function testProcedureHasRequiredProperties(): void
+    public function testParamHasRequiredProperties(): void
     {
-        $reflection = new \ReflectionClass(SaveAlipayMiniProgramFormId::class);
+        $reflection = new \ReflectionClass(SaveAlipayMiniProgramFormIdParam::class);
 
         $this->assertTrue($reflection->hasProperty('miniProgramId'));
         $this->assertTrue($reflection->hasProperty('formId'));
@@ -88,19 +89,19 @@ final class SaveAlipayMiniProgramFormIdTest extends AbstractProcedureTestCase
         $this->assertSame(LockableProcedure::class, $parentClass->getName());
     }
 
-    public function testExecuteMethodReturnsArray(): void
+    public function testExecuteMethodReturnsArrayResult(): void
     {
         $reflection = new \ReflectionClass(SaveAlipayMiniProgramFormId::class);
         $executeMethod = $reflection->getMethod('execute');
 
         $returnType = $executeMethod->getReturnType();
         $this->assertInstanceOf(\ReflectionNamedType::class, $returnType);
-        $this->assertSame('array', $returnType->getName());
+        $this->assertSame('Tourze\JsonRPC\Core\Result\ArrayResult', $returnType->getName());
     }
 
-    public function testProcedurePropertiesHaveMethodParamAttributes(): void
+    public function testParamPropertiesHaveMethodParamAttributes(): void
     {
-        $reflection = new \ReflectionClass(SaveAlipayMiniProgramFormId::class);
+        $reflection = new \ReflectionClass(SaveAlipayMiniProgramFormIdParam::class);
 
         $miniProgramIdProperty = $reflection->getProperty('miniProgramId');
         $formIdProperty = $reflection->getProperty('formId');

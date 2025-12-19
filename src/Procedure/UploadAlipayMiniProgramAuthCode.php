@@ -11,6 +11,7 @@ use AlipayMiniProgramBundle\Entity\MiniProgram;
 use AlipayMiniProgramBundle\Entity\User;
 use AlipayMiniProgramBundle\Enum\AlipayAuthScope;
 use AlipayMiniProgramBundle\Message\UpdateUserInfoMessage;
+use AlipayMiniProgramBundle\Param\UploadAlipayMiniProgramAuthCodeParam;
 use AlipayMiniProgramBundle\Repository\MiniProgramRepository;
 use AlipayMiniProgramBundle\Repository\UserRepository;
 use AlipayMiniProgramBundle\Response\AlipaySystemOauthTokenResponse;
@@ -22,13 +23,12 @@ use GuzzleHttp\Client;
 use Symfony\Component\HttpClient\Exception\TimeoutException;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Component\Validator\Constraints as Assert;
-use Tourze\AccessTokenContracts\AccessTokenInterface;
 use Tourze\AccessTokenContracts\TokenServiceInterface;
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
 use Tourze\JsonRPC\Core\Attribute\MethodExpose;
-use Tourze\JsonRPC\Core\Attribute\MethodParam;
 use Tourze\JsonRPC\Core\Attribute\MethodTag;
+use Tourze\JsonRPC\Core\Contracts\RpcParamInterface;
+use Tourze\JsonRPC\Core\Result\ArrayResult;
 use Tourze\JsonRPC\Core\Exception\ApiException;
 use Tourze\JsonRPC\Core\Model\JsonRpcParams;
 use Tourze\JsonRPC\Core\Model\JsonRpcRequest;
@@ -44,26 +44,6 @@ use Tourze\JsonRPCLogBundle\Attribute\Log;
 #[Log]
 class UploadAlipayMiniProgramAuthCode extends LockableProcedure
 {
-    /**
-     * 小程序的 AppID
-     */
-    #[MethodParam(description: '小程序的 AppID')]
-    public string $appId = '';
-
-    /**
-     * 授权范围
-     */
-    #[MethodParam(description: '授权范围，auth_base 或 auth_user')]
-    #[Assert\NotNull]
-    public string $scope;
-
-    /**
-     * 授权码
-     */
-    #[MethodParam(description: '授权码')]
-    #[Assert\NotNull]
-    public string $authCode;
-
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly MiniProgramRepository $miniProgramRepository,
@@ -75,19 +55,22 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
     ) {
     }
 
-    public function execute(): array
+    /**
+     * @phpstan-param UploadAlipayMiniProgramAuthCodeParam $param
+     */
+    public function execute(UploadAlipayMiniProgramAuthCodeParam|RpcParamInterface $param): ArrayResult
     {
-        $this->validateParameters();
-        $miniProgram = $this->getMiniProgram();
+        $this->validateParameters($param->scope);
+        $miniProgram = $this->getMiniProgram($param->appId);
 
         try {
-            $response = $this->getAlipayAccessToken($miniProgram);
+            $response = $this->getAlipayAccessToken($miniProgram, $param->authCode);
             $user = $this->findOrCreateUser($miniProgram, $response);
-            $this->dispatchUserInfoUpdate($user);
-            $authCodeEntity = $this->createAuthCodeEntity($user, $response);
+            $this->dispatchUserInfoUpdate($user, $param->scope, $param->authCode);
+            $authCodeEntity = $this->createAuthCodeEntity($user, $response, $param->scope, $param->authCode);
             $token = $this->createBusinessToken($user);
 
-            return $this->buildResponse($user, $authCodeEntity, $token);
+            return $this->buildResponse($user, $authCodeEntity, $token, $param->scope);
         } catch (TimeoutException $exception) {
             throw new ApiException('支付宝接口超时，请稍后重试', 0, previous: $exception);
         } catch (UniqueConstraintViolationException $exception) {
@@ -96,16 +79,16 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
         }
     }
 
-    private function validateParameters(): void
+    private function validateParameters(string $scope): void
     {
-        if (!in_array($this->scope, [AlipayAuthScope::AUTH_BASE->value, AlipayAuthScope::AUTH_USER->value], true)) {
+        if (!in_array($scope, [AlipayAuthScope::AUTH_BASE->value, AlipayAuthScope::AUTH_USER->value], true)) {
             throw new ApiException('无效的授权范围');
         }
     }
 
-    private function getMiniProgram(): MiniProgram
+    private function getMiniProgram(string $appId): MiniProgram
     {
-        $miniProgram = $this->miniProgramRepository->findOneBy(['appId' => $this->appId]);
+        $miniProgram = $this->miniProgramRepository->findOneBy(['appId' => $appId]);
         if (null === $miniProgram) {
             throw new ApiException('未找到小程序配置');
         }
@@ -113,7 +96,7 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
         return $miniProgram;
     }
 
-    private function getAlipayAccessToken(MiniProgram $miniProgram): AlipaySystemOauthTokenResponse
+    private function getAlipayAccessToken(MiniProgram $miniProgram, string $authCode): AlipaySystemOauthTokenResponse
     {
         $apiInstance = new AlipaySystemOauthApi(new Client());
         $alipayConfig = $this->buildAlipayConfig($miniProgram);
@@ -121,7 +104,7 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
 
         $tokenModel = new AlipaySystemOauthTokenModel();
         $tokenModel->setGrantType('authorization_code');
-        $tokenModel->setCode($this->authCode);
+        $tokenModel->setCode($authCode);
 
         try {
             $response = $apiInstance->token($tokenModel);
@@ -177,18 +160,18 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
         return $user;
     }
 
-    private function dispatchUserInfoUpdate(User $user): void
+    private function dispatchUserInfoUpdate(User $user, string $scope, string $authCode): void
     {
-        if ($this->scope === AlipayAuthScope::AUTH_USER->value) {
+        if ($scope === AlipayAuthScope::AUTH_USER->value) {
             $userId = $user->getId();
             if (null !== $userId) {
-                $message = new UpdateUserInfoMessage($userId, $this->authCode);
+                $message = new UpdateUserInfoMessage($userId, $authCode);
                 $this->messageBus->dispatch($message);
             }
         }
     }
 
-    private function createAuthCodeEntity(User $user, AlipaySystemOauthTokenResponse $response): AuthCode
+    private function createAuthCodeEntity(User $user, AlipaySystemOauthTokenResponse $response, string $scope, string $authCode): AuthCode
     {
         $userId = $response->getUserId();
         $accessToken = $response->getAccessToken();
@@ -206,8 +189,8 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
 
         $authCodeEntity = new AuthCode();
         $authCodeEntity->setAlipayUser($user);
-        $authCodeEntity->setAuthCode($this->authCode);
-        $authCodeEntity->setScope(AlipayAuthScope::from($this->scope));
+        $authCodeEntity->setAuthCode($authCode);
+        $authCodeEntity->setScope(AlipayAuthScope::from($scope));
         $authCodeEntity->setOpenId($userId);
         $authCodeEntity->setUserId($userId);
         $authCodeEntity->setAccessToken($accessToken);
@@ -246,7 +229,7 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
     /**
      * @return array<string, mixed>
      */
-    private function buildResponse(User $user, AuthCode $authCodeEntity, string $token): array
+    private function buildResponse(User $user, AuthCode $authCodeEntity, string $token, string $scope): array
     {
         $authStart = $authCodeEntity->getAuthStart();
         $result = [
@@ -261,7 +244,7 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
             'phone' => $this->userService->getAllPhones($user),
         ];
 
-        if ($this->scope === AlipayAuthScope::AUTH_USER->value) {
+        if ($scope === AlipayAuthScope::AUTH_USER->value) {
             $result['userInfo'] = [
                 'nickName' => $user->getNickName(),
                 'avatar' => $user->getAvatar(),
@@ -271,7 +254,7 @@ class UploadAlipayMiniProgramAuthCode extends LockableProcedure
             ];
         }
 
-        return $result;
+        return new ArrayResult($result);
     }
 
     public function getLockResource(JsonRpcParams $params): ?array

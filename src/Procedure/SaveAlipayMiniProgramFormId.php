@@ -3,6 +3,7 @@
 namespace AlipayMiniProgramBundle\Procedure;
 
 use AlipayMiniProgramBundle\Entity\MiniProgram;
+use AlipayMiniProgramBundle\Param\SaveAlipayMiniProgramFormIdParam;
 use AlipayMiniProgramBundle\Service\FormIdService;
 use AlipayMiniProgramBundle\Service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -11,8 +12,9 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
 use Tourze\JsonRPC\Core\Attribute\MethodExpose;
-use Tourze\JsonRPC\Core\Attribute\MethodParam;
 use Tourze\JsonRPC\Core\Attribute\MethodTag;
+use Tourze\JsonRPC\Core\Contracts\RpcParamInterface;
+use Tourze\JsonRPC\Core\Result\ArrayResult;
 use Tourze\JsonRPCLockBundle\Procedure\LockableProcedure;
 use Tourze\JsonRPCLogBundle\Attribute\Log;
 
@@ -23,12 +25,6 @@ use Tourze\JsonRPCLogBundle\Attribute\Log;
 #[IsGranted(attribute: 'IS_AUTHENTICATED_FULLY')]
 class SaveAlipayMiniProgramFormId extends LockableProcedure
 {
-    #[MethodParam(description: '小程序ID')]
-    public string $miniProgramId;
-
-    #[MethodParam(description: '表单ID')]
-    public string $formId;
-
     public function __construct(
         private readonly FormIdService $formIdService,
         private readonly EntityManagerInterface $entityManager,
@@ -38,11 +34,11 @@ class SaveAlipayMiniProgramFormId extends LockableProcedure
     }
 
     /**
-     * @return array<string, mixed>
+     * @phpstan-param SaveAlipayMiniProgramFormIdParam $param
      */
-    public function execute(): array
+    public function execute(SaveAlipayMiniProgramFormIdParam|RpcParamInterface $param): ArrayResult
     {
-        $miniProgram = $this->entityManager->find(MiniProgram::class, $this->miniProgramId);
+        $miniProgram = $this->entityManager->find(MiniProgram::class, $param->miniProgramId);
         if (null === $miniProgram) {
             throw new NotFoundHttpException('小程序不存在');
         }
@@ -60,12 +56,12 @@ class SaveAlipayMiniProgramFormId extends LockableProcedure
         $formId = $this->formIdService->saveFormId(
             $miniProgram,
             $alipayUser,
-            $this->formId,
+            $param->formId,
         );
 
-        return [
+        return new ArrayResult([
             'id' => $formId->getId(),
             'expiredTime' => $formId->getExpireTime()?->format('Y-m-d H:i:s'),
-        ];
+        ]);
     }
 }
